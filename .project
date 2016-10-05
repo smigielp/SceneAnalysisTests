@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>SceneAnalysisTests</name>
+	<comment></comment>
+	<projects>
+		<project>SceneAnalysisLib</project>
+		<project>Visual</project>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.python.pydev.PyDevBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.python.pydev.pythonNature</nature>
+	</natures>
+	<variableList>
+		<variable>
+			<name>TestPictures</name>
+			<value>file:/E:/Programowanie/workspace/3DCapture/TestPictures</value>
+		</variable>
+	</variableList>
+</projectDescription>
