@@ -6,7 +6,6 @@ from Tools       import ImageProcessor
 from Tools       import GnuplotDrawer
 from Tools       import ImageApi
 from SceneRepTools.Structures import GraphStructure 
-
 import Control
 
 

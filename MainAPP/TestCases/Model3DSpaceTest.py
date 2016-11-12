@@ -1,7 +1,5 @@
-from Tools   import ImageApi, ImageProcessor, GnuplotDrawer
-
+from Tools import ImageApi, ImageProcessor, GnuplotDrawer
 import Control
-
 
 #############################################################################
 # Loads pictures given in the list. Each picture taken from different side

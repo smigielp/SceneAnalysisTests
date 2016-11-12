@@ -4,7 +4,6 @@
 	<comment></comment>
 	<projects>
 		<project>SceneAnalysisLib</project>
-		<project>Visual</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

@@ -1,5 +1,5 @@
 from Tools import ImageProcessor, ImageApi
-from MainTests import Control
+import Control
 
 
 
