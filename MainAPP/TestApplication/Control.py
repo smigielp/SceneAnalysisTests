@@ -3,9 +3,9 @@ from TestCases  import GraphSearchTest, Model3DSpaceTest, SceneModelTest, Model3
 from ImageApi import Filter, CameraApi, CameraApi2
 from VehicleApi import QuadcopterApi 
 from ImageProcessor import ImageProcessor
-import GnuplotDrawer
 from time import sleep
 from datetime import datetime 
+import GnuplotDrawer
 import sys
 
 
@@ -22,6 +22,16 @@ class BaseControl(Thread):
         self.filter = Filter()
         self.imgProc = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
         self.stopThread = False
+        self.testCasesList = [
+                        'Graph partial match',
+                        'Graph complete match',
+                        'Extended graph partial match',
+                        'Real photo graph match',
+                        'Blank test'
+                        '3D model building',
+                        'Vectorization test',
+                        'MavLink protocol test'
+                    ]
     
     def setTestCase(self, testCase):
         self.testCase = testCase    
@@ -31,9 +41,8 @@ class BaseControl(Thread):
 
         
     def run(self):
-        self.mainTask()
         while not self.stopThread and self.cameraApi.isOpened():
-            pass#self.getLiveCameraView()
+            self.getLiveCameraView()
     
     def killApplication(self):
         try:
@@ -48,53 +57,56 @@ class BaseControl(Thread):
     #############################################################################
     # Executes the test case 
     #           
-    def mainTask(self):
+    def executeMainTask(self, testCase):
+        
         # Testing partial match of the scene fragment
-        if self.testCase == 0:             
+        if testCase == 0:             
             bigMap = {'file': 'TestPictures/big_map.png', 'params': 'parameters_test1'}
-            smallMaps = {'file': ['TestPictures/small_map1.png'], 'params': 'parameters_test1'}
-            GraphSearchTest.localizeObjects(bigMap, smallMaps, [5], DEBUG_LEVEL)
+            smallMap = {'file': 'TestPictures/small_map1.png', 'params': 'parameters_test1'}
+            GraphSearchTest.localizeObjects(bigMap, smallMap, [5], DEBUG_LEVEL)
+        
         # Testing complete match of the scene fragment
-        elif self.testCase == 1:
-            bigMap = {'file': 'TestPictures/big_map.png', 'params': 'parameters_test2'}
-            smallMaps = {'file': ['TestPictures/small_map_complete.png'], 'params': 'parameters_test2'}
-            GraphSearchTest.localizeObjects(bigMap, smallMaps, [5], DEBUG_LEVEL)
+        elif testCase == 1:
+            bigMap = {'file': 'TestPictures/big_map.png', 'params': 'parameters_test1'}
+            smallMap = {'file': 'TestPictures/small_map_complete.png', 'params': 'parameters_test1'}
+            GraphSearchTest.localizeObjects(bigMap, smallMap, [5], DEBUG_LEVEL)
+        
         # Testing partial match in extended graph
-        elif self.testCase == 2:
+        elif testCase == 2:
             bigMap = {'file': 'TestPictures/big_map_double.png', 'params': 'parameters_mid_res2'}
             smallMaps = {'file': ['TestPictures/small_map_complete.png'], 'params': 'parameters_test3'}
             GraphSearchTest.localizeObjects(bigMap, smallMaps, [10, 5], DEBUG_LEVEL, graphLevel=1)       
+        
         # Testing match between real photo and the scene graph
         # with construction of 3D representation of found object (also based on real photos)
-        elif self.testCase == 3:
+        elif testCase == 3:
             pictures = [{'file': ['TestPictures/front_test_5.png', 0], 'params': 'parameters_test_5'},
                         {'file': ['TestPictures/right_test_5.png', 0.5], 'params': 'parameters_test_5'},
                         {'file': ['TestPictures/top_test_5.png', None], 'params': 'parameters_test_5'}]
             SceneModelTest.buildSceneModel(pictures, DEBUG_LEVEL)
-        elif self.testCase == 4:
+        elif testCase == 4:
             pictures = [{'file': ['TestPictures/front_test_6.png', 0], 'params': 'parameters_test_6'},
                         {'file': ['TestPictures/right_test_6.png', 0.5], 'params': 'parameters_test_6'},
                         {'file': ['TestPictures/top_test_6.png', None], 'params': 'parameters_test_6'}]
             Model3DTest.loadImagesWithAngles(pictures, DEBUG_LEVEL)
-        # Testing of 3D model building
-        # for conference paper for Zakopane
-        elif self.testCase == 5:
-            pictures = [{'file': ['TestPictures/front_test_71.png', 0.5], 'params': 'parameters_test_7'},
-                        {'file': ['TestPictures/right_test_71.png', 0], 'params': 'parameters_test_7'},
-                        {'file': ['TestPictures/top_test_7.png', None], 'params': 'parameters_test_7'}]
+        
+        #Building 3D model
+        elif testCase == 5:
+            pictures = [{'file': ['TestPictures/b2_right_preproc.png', 0.5], 'params': 'parameters_test1'},
+                        {'file': ['TestPictures/b2_front_preproc.png', 0], 'params': 'parameters_test1'},
+                        {'file': ['TestPictures/b2_top_preproc.png', None], 'params': 'parameters_test1'}]
             Model3DSpaceTest.loadImagesWithAngles(pictures, DEBUG_LEVEL)
-        # Ad-hoc test wektoryzacji
-        elif self.testCase == 6:
+            
+        # Ad-hoc vectorization test
+        elif testCase == 6:
             flt = Filter()
-            sourceImage = flt.loadCvImage('TestPictures/b1_right_preproc_mod.png')
+            sourceImage = flt.loadCvImage('TestPictures/big_map.png')
             processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
-            sourceImage = flt.prepareImage(sourceImage)
             sourceVectors = processor.getVectorRepresentation(sourceImage)
             GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
-            
-        
+                    
         # Test komunikacji po MavLink
-        elif self.testCase == 7:
+        elif testCase == 7:
             print datetime.now(), " - Mavlink test "
             #dron = QuadcopterApi()
             #dron.setModeGuided()
@@ -116,7 +128,7 @@ class BaseControl(Thread):
                     
     
     
-    def processOpenedFile(self, filename, width):
+    def processOpenedFile(self, filename):
         imagecv = self.filter.loadCvImage(filename)
         # some processing...        
         imagetk = self.filter.getImageTkBGR(imagecv, self.gui.IMAGE_WIDTH)

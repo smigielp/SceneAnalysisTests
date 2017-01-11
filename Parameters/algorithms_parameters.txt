@@ -6,7 +6,7 @@ imgResizeScale = 0.8
 luminusThreshold = 150
         
 cornerAngle = 0.18
-windowSize = 7
+windowSize = 3
         
 combThreshold = 8
 angleThreshold = 0.03
@@ -17,18 +17,18 @@ straightThreshold = 7
 
 
 [parameters_test1]
-filterColor = NONE
 erosionRepeat = 1
 dilatationRepeat = 1
 imgResizeScale = 1.0       
 luminusThreshold = 240
         
-windowSize = 5
+windowSize = 3
 outlierDistance = 0.005
 closeEdgesDistance = 0.015
         
 straightThreshold = 6
 postprocesLevel = 1
+
 
 
 [parameters_test2]

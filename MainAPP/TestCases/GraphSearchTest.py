@@ -1,6 +1,3 @@
-'''
-Class used for test cases for paper in ESWA
-'''
 from Recognition import ShapeRecognition
 from Tools       import ImageProcessor
 from Tools       import GnuplotDrawer
@@ -11,38 +8,33 @@ import Control
 
 
 
-
-
 #############################################################################
 # Test function used in test case
 # @TODO - move to ImageProcessor class as a complete method
 #           
-def localizeObjects(bigMapPic, smallMapsPic, markedObjectIdx, debugLevel, graphLevel=1): 
+def localizeObjects(bigMapPic, smallMapPic, markedObjectIdx, debugLevel, graphLevel=1): 
     flt = ImageApi.Filter() 
     processor = ImageProcessor.ImageProcessor(Control.PARAMETER_FILE_NAME, bigMapPic['params'], debugLevel) 
-    processor2 = ImageProcessor.ImageProcessor(Control.PARAMETER_FILE_NAME, smallMapsPic['params'], debugLevel)   
+    processor2 = ImageProcessor.ImageProcessor(Control.PARAMETER_FILE_NAME, smallMapPic['params'], debugLevel)   
                        
-    bigMap = []
-    bigMap.append(flt.loadCvImage(bigMapPic['file'], processor.imgResizeScale))  
-    smallMaps = []
-    for fileName in smallMapsPic['file']:  
-        smallMaps.append(flt.loadCvImage(fileName, processor2.imgResizeScale))
+    bigMap = flt.loadCvImage(bigMapPic['file'], processor.imgResizeScale) 
+    smallMap = flt.loadCvImage(smallMapPic['file'], processor2.imgResizeScale)
     
-    vectorSetBigMap = processor.getVectorizedImageSet(bigMap)
-    vectorSetSmallMaps = processor2.getVectorizedImageSet(smallMaps)   
+    vectorSetBigMap = processor.getVectorRepresentation(bigMap, flt.prepareImage)
+    vectorSetSmallMaps = processor2.getVectorRepresentation(smallMap, flt.prepareImage)   
     
-    vectorBigMap       = vectorSetBigMap[0]['vect']
-    vectorBigMapDomain = vectorSetBigMap[0]['domain']
+    vectorBigMap       = vectorSetBigMap['vect']
+    vectorBigMapDomain = vectorSetBigMap['domain']
     
-    vectorSmallMap1       = vectorSetSmallMaps[0]['vect']  
-    vectorSmallMap1Domain = vectorSetSmallMaps[0]['domain'] 
+    vectorSmallMap       = vectorSetSmallMaps['vect']  
+    vectorSmallMapDomain = vectorSetSmallMaps['domain'] 
                      
     bigMapObjGraph = GraphStructure(vectorBigMap, vectorBigMapDomain, graphLevel)
             
     print "Graph:"   
     print bigMapObjGraph.getGraphElement(2)
     
-    smallMap1ObjGraph = GraphStructure(vectorSmallMap1, vectorSmallMap1Domain, graphLevel)       
+    smallMap1ObjGraph = GraphStructure(vectorSmallMap, vectorSmallMapDomain, graphLevel)       
     markedObj = bigMapObjGraph.getGraphElement(markedObjectIdx[0])
     
     objectShapeMatching = ShapeRecognition.findPatternInGraph(markedObj, smallMap1ObjGraph.getGraph())
@@ -76,5 +68,5 @@ def localizeObjects(bigMapPic, smallMapsPic, markedObjectIdx, debugLevel, graphL
         objectsToMark[idx] = 'all'
     
     GnuplotDrawer.printObjectGraph(bigMapObjGraph, objectsToMark)
-    GnuplotDrawer.printObjectGraph(smallMap1ObjGraph)
+    #GnuplotDrawer.printObjectGraph(smallMap1ObjGraph)
     

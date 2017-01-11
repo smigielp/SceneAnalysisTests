@@ -38,7 +38,7 @@ class GUI(Thread):
         self.imageBox["opened"] = Canvas(master=openedFrame, width=self.SMALL_IMAGE_WIDTH, height=self.SMALL_IMAGE_HEIGHT)    
         self.imageBox["opened"].pack()
         
-        self.funcButtonFrame = Label(master=self.root, bd=2, relief=SUNKEN, padx=8, pady=8, anchor=W)        
+        self.funcButtonFrame = Label(master=self.root, bd=2, relief=SUNKEN, width=self.IMAGE_WIDTH)        
         self.funcButtonFrame.grid(row=1, column=0)
         self.openFileBtn = Button(self.funcButtonFrame, text="open file", command=self.openFile, padx=10, width=20)
         self.getCameraFrameBtn = Button(self.funcButtonFrame, text="get camera frame", command=self.getCameraFrame, padx=10, width=20)
@@ -46,19 +46,14 @@ class GUI(Thread):
         self.getCameraFrameBtn.grid(row=1)
         
         self.testCase = IntVar()
-        self.radioFrame = Label(master=self.funcButtonFrame, bd=2, padx=8, pady=8)
+        self.radioFrame = Label(master=self.funcButtonFrame, bd=2)
         self.radioFrame.grid(row=2, column=0)
-        self.rb1 = Radiobutton(self.radioFrame, text="1", variable=self.testCase, value=1, padx=10)
-        self.rb2 = Radiobutton(self.radioFrame, text="2", variable=self.testCase, value=2, padx=10)
-        self.rb3 = Radiobutton(self.radioFrame, text="3", variable=self.testCase, value=3, padx=10)
-        self.rb4 = Radiobutton(self.radioFrame, text="4", variable=self.testCase, value=4, padx=10)
-        self.rb5 = Radiobutton(self.radioFrame, text="5", variable=self.testCase, value=5, padx=10)
-        self.rb1.grid(row=0)
-        self.rb2.grid(row=1)
-        self.rb3.grid(row=2)
-        self.rb4.grid(row=3)
-        self.rb5.grid(row=4)
-                        
+        self.radioButtons = []
+        for i in range(len(controller.testCasesList)):
+            rb = Radiobutton(self.radioFrame, indicatoron=0, text=controller.testCasesList[i], variable=self.testCase, value=i, width=20, padx=10)
+            rb.grid(row=i)
+            self.radioButtons.append(rb)
+            
         self.runTestBtn = Button(self.radioFrame, text="run test", command=self.executeTask, padx=10)
         self.runTestBtn.grid(row=3, column=1)
         
@@ -97,7 +92,7 @@ class GUI(Thread):
     
     
     def executeTask(self):
-        self.control.mainTask(self.testCase.get())  
+        self.control.executeMainTask(self.testCase.get())  
         
         
     def run(self):   
@@ -108,7 +103,7 @@ if __name__ == "__main__":
     #root.geometry('250x150+300+300')
     controller = BaseControl()
     view = GUI(controller)    
-    controller.setTestCase(7)
     controller.start()
+    #controller.executeMainTask(1)
     
     
