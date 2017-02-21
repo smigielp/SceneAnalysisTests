@@ -1,12 +1,14 @@
 from threading import Thread
 from TestCases  import GraphSearchTest, Model3DSpaceTest, SceneModelTest, Model3DTest
 from ImageApi import Filter, CameraApi, CameraApi2
-from VehicleApi import QuadcopterApi 
+from VehicleApi import QuadcopterApi
 from ImageProcessor import ImageProcessor
 from time import sleep
-from datetime import datetime 
+from datetime import datetime
 import GnuplotDrawer
 import sys
+
+from dronekit_sitl import SITL
 
 
 DEBUG_LEVEL = 0
@@ -15,9 +17,9 @@ PARAMETER_FILE_NAME = "Parameters/algorithms_parameters.txt"
 
 
 class BaseControl(Thread):
-       
-    def __init__(self):                
-        Thread.__init__(self)   
+
+    def __init__(self):
+        Thread.__init__(self)
         self.cameraApi = CameraApi2()
         self.filter = Filter()
         self.imgProc = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
@@ -30,53 +32,55 @@ class BaseControl(Thread):
                         'Blank test'
                         '3D model building',
                         'Vectorization test',
-                        'MavLink protocol test'
+                        'MavLink protocol test',
+                        'Mavlink test',
+                        'Movement test'
                     ]
-    
+
     def setTestCase(self, testCase):
-        self.testCase = testCase    
-    
+        self.testCase = testCase
+
     def setView(self, viewComponent):
         self.gui = viewComponent
 
-        
+
     def run(self):
         while not self.stopThread and self.cameraApi.isOpened():
             self.getLiveCameraView()
-    
+
     def killApplication(self):
         try:
             self.stopThread = True
             self.cameraApi.stopCapture()
             self.cameraApi.release()
-        except: 
-            print "Error closing VideoCapture."    
+        except:
+            print "Error closing VideoCapture."
         sys.exit
-    
-    
+
+
     #############################################################################
     # Executes the test case 
     #           
     def executeMainTask(self, testCase):
-        
+        print "Running test "+str(testCase)
         # Testing partial match of the scene fragment
-        if testCase == 0:             
+        if testCase == 0:
             bigMap = {'file': 'TestPictures/big_map.png', 'params': 'parameters_test1'}
             smallMap = {'file': 'TestPictures/small_map1.png', 'params': 'parameters_test1'}
             GraphSearchTest.localizeObjects(bigMap, smallMap, [5], DEBUG_LEVEL)
-        
+
         # Testing complete match of the scene fragment
         elif testCase == 1:
             bigMap = {'file': 'TestPictures/big_map.png', 'params': 'parameters_test1'}
             smallMap = {'file': 'TestPictures/small_map_complete.png', 'params': 'parameters_test1'}
             GraphSearchTest.localizeObjects(bigMap, smallMap, [5], DEBUG_LEVEL)
-        
+
         # Testing partial match in extended graph
         elif testCase == 2:
             bigMap = {'file': 'TestPictures/big_map_double.png', 'params': 'parameters_mid_res2'}
             smallMaps = {'file': ['TestPictures/small_map_complete.png'], 'params': 'parameters_test3'}
-            GraphSearchTest.localizeObjects(bigMap, smallMaps, [10, 5], DEBUG_LEVEL, graphLevel=1)       
-        
+            GraphSearchTest.localizeObjects(bigMap, smallMaps, [10, 5], DEBUG_LEVEL, graphLevel=1)
+
         # Testing match between real photo and the scene graph
         # with construction of 3D representation of found object (also based on real photos)
         elif testCase == 3:
@@ -89,14 +93,14 @@ class BaseControl(Thread):
                         {'file': ['TestPictures/right_test_6.png', 0.5], 'params': 'parameters_test_6'},
                         {'file': ['TestPictures/top_test_6.png', None], 'params': 'parameters_test_6'}]
             Model3DTest.loadImagesWithAngles(pictures, DEBUG_LEVEL)
-        
+
         #Building 3D model
         elif testCase == 5:
             pictures = [{'file': ['TestPictures/b2_right_preproc.png', 0.5], 'params': 'parameters_test1'},
                         {'file': ['TestPictures/b2_front_preproc.png', 0], 'params': 'parameters_test1'},
                         {'file': ['TestPictures/b2_top_preproc.png', None], 'params': 'parameters_test1'}]
             Model3DSpaceTest.loadImagesWithAngles(pictures, DEBUG_LEVEL)
-            
+
         # Ad-hoc vectorization test
         elif testCase == 6:
             flt = Filter()
@@ -104,7 +108,7 @@ class BaseControl(Thread):
             processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
             sourceVectors = processor.getVectorRepresentation(sourceImage)
             GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
-                    
+
         # Test komunikacji po MavLink
         elif testCase == 7:
             print datetime.now(), " - Mavlink test "
@@ -117,17 +121,65 @@ class BaseControl(Thread):
             #dron.goto(3, 3)
             #dron.goto_position_relative(4, 0, 0)
             imagecv = self.cameraApi.getFrame()
-    
+
             image = self.filter.prepareImage(imagecv)
             vectors = self.imgProc.getVectorRepresentation(image, edgesExposed=False)
             GnuplotDrawer.printMultiPointPicture(vectors['vect'], vectors['domain'])
-            
+
             imagetk = self.filter.getImageTk(image, self.gui.IMAGE_WIDTH)
             self.gui.showTakenCameraImg(imagetk)
             sleep(0.5)
-                    
-    
-    
+        elif testCase == 8:
+            print "Testing movement control"
+            sitl = SITL()
+            sitl.download('copter', '3.3', verbose=True)
+            sitl_args = ['-I0', '--model', 'quad', '--home=49.9880962,19.90333,584,353']
+            sitl.launch(sitl_args, await_ready=True, restart=True)
+            print "Connecting to vehicle on: 'tcp:127.0.0.1:5760'"
+            vehicle = QuadcopterApi('tcp:127.0.0.1:5760')
+            print vehicle.quad.capabilities
+
+            vehicle.setModeGuided()
+            vehicle.takeoff(5)
+            sleep(1)
+            #vehicle.getState()
+            #vehicle.changeHeading(-60)
+
+            '''
+            print "start heading: " + str(vehicle.quad.heading)
+            vehicle.moveForward(1)
+            print "start from: " + str(vehicle.quad.location.local_frame.north) +" "+str(vehicle.quad.location.local_frame.east)
+            print "heading: " + str(vehicle.quad.heading)
+            vehicle.moveToLocRelativeHeading(4,4)
+            print "end on: " + str(vehicle.quad.location.local_frame.north) +" "+str(vehicle.quad.location.local_frame.east)
+            print "heading: " + str(vehicle.quad.heading)
+            vehicle.changeHeading(180,False)
+            vehicle.moveToLocRelativeHeading(-3,0)
+            print "end on: " + str(vehicle.quad.location.local_frame.north) +" "+str(vehicle.quad.location.local_frame.east)
+            print "heading: " + str(vehicle.quad.heading)
+            '''
+
+            print "start from: ", vehicle.quad.location.local_frame
+            print "start heading: " + str(vehicle.quad.heading)
+            vehicle.moveForward(2)
+            print "first phase ended: ", vehicle.quad.location.local_frame
+            print "heading: " + str(vehicle.quad.heading)
+            vehicle.moveToLocRelativeHeading(2, 2)
+            print "second phase ended: ", vehicle.quad.location.local_frame
+            print "heading: " + str(vehicle.quad.heading)
+            vehicle.moveToLocRelativeHeading(-4, -2, False)
+            sleep(4)
+            print "end on: " ,vehicle.quad.location.local_frame
+            print "heading: " + str(vehicle.quad.heading)
+
+            vehicle.close()
+            #sitl.stop()
+            print("Completed")
+
+
+
+
+
     def processOpenedFile(self, filename):
         imagecv = self.filter.loadCvImage(filename)
         # some processing...        
@@ -141,12 +193,11 @@ class BaseControl(Thread):
         imagetk = self.filter.getImageTk(imagecv, self.gui.IMAGE_WIDTH)
         self.gui.showTakenCameraImg(imagetk)
         sleep(1)
-        
-        
+
+
     def getLiveCameraView(self):
         imagecv = self.cameraApi.getFrame()
         # some processing...
         imagetk = self.filter.getImageTkBGR(imagecv, self.gui.IMAGE_WIDTH)
         self.gui.showLiveCameraImg(imagetk)
-        
-    
+
