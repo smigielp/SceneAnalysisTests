@@ -1,4 +1,6 @@
 from threading import Thread
+
+import MovementTracker
 from TestCases  import GraphSearchTest, Model3DSpaceTest, SceneModelTest, Model3DTest
 from ImageApi import Filter, CameraApi, CameraApi2
 from VehicleApi import QuadcopterApi
@@ -131,6 +133,7 @@ class BaseControl(Thread):
             sleep(0.5)
         elif testCase == 8:
             print "Testing movement control"
+
             sitl = SITL()
             sitl.download('copter', '3.3', verbose=True)
             sitl_args = ['-I0', '--model', 'quad', '--home=49.9880962,19.90333,584,353']
@@ -140,25 +143,12 @@ class BaseControl(Thread):
             print vehicle.quad.capabilities
 
             vehicle.setModeGuided()
+            MovementTracker.start(vehicle)
             vehicle.takeoff(5)
             sleep(1)
-            #vehicle.getState()
-            #vehicle.changeHeading(-60)
 
-            '''
-            print "start heading: " + str(vehicle.quad.heading)
-            vehicle.moveForward(1)
-            print "start from: " + str(vehicle.quad.location.local_frame.north) +" "+str(vehicle.quad.location.local_frame.east)
-            print "heading: " + str(vehicle.quad.heading)
-            vehicle.moveToLocRelativeHeading(4,4)
-            print "end on: " + str(vehicle.quad.location.local_frame.north) +" "+str(vehicle.quad.location.local_frame.east)
-            print "heading: " + str(vehicle.quad.heading)
-            vehicle.changeHeading(180,False)
-            vehicle.moveToLocRelativeHeading(-3,0)
-            print "end on: " + str(vehicle.quad.location.local_frame.north) +" "+str(vehicle.quad.location.local_frame.east)
-            print "heading: " + str(vehicle.quad.heading)
-            '''
-
+            vehicle.moveForward(-1)
+            vehicle.changeHeading(0, False)
             print "start from: ", vehicle.quad.location.local_frame
             print "start heading: " + str(vehicle.quad.heading)
             vehicle.moveForward(2)
@@ -172,6 +162,7 @@ class BaseControl(Thread):
             print "end on: " ,vehicle.quad.location.local_frame
             print "heading: " + str(vehicle.quad.heading)
 
+            MovementTracker.stop()
             vehicle.close()
             #sitl.stop()
             print("Completed")
