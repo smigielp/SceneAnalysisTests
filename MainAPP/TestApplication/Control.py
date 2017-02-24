@@ -144,11 +144,24 @@ class BaseControl(Thread):
 
             vehicle.setModeGuided()
             MovementTracker.start(vehicle)
-            vehicle.takeoff(5)
+            vehicle.takeoff()
             sleep(1)
 
-            vehicle.moveForward(-1)
-            vehicle.changeHeading(0, False)
+            #vehicle.moveForward(-1)
+            vehicle.commandQueue.setMode(vehicle.commandQueue.Mode.IMM_EXECUTE)
+            vehicle.commandQueue.goto(-vehicle.quad.location.local_frame.north,-vehicle.quad.location.local_frame.east)
+            print "start from: ", vehicle.quad.location.local_frame
+            print "start heading: " + str(vehicle.quad.heading)
+            vehicle.commandQueue.setMode(vehicle.commandQueue.Mode.QUEUE_COMMANDS)
+            vehicle.commandQueue.moveForward(-1)
+            vehicle.commandQueue.addCommandByName("changeHeading", 0, False)
+            vehicle.commandQueue.moveForward(2)
+            vehicle.commandQueue.moveToLocRelativeHeading(2,2)
+            vehicle.commandQueue.moveToLocRelativeHeading(-4,-2)
+            vehicle.commandQueue.confirm()
+            print "end on: " ,vehicle.quad.location.local_frame
+            print "heading: " + str(vehicle.quad.heading)
+            '''vehicle.changeHeading(0, False)
             print "start from: ", vehicle.quad.location.local_frame
             print "start heading: " + str(vehicle.quad.heading)
             vehicle.moveForward(2)
@@ -160,7 +173,7 @@ class BaseControl(Thread):
             vehicle.moveToLocRelativeHeading(-4, -2, False)
             sleep(4)
             print "end on: " ,vehicle.quad.location.local_frame
-            print "heading: " + str(vehicle.quad.heading)
+            print "heading: " + str(vehicle.quad.heading)'''
 
             MovementTracker.stop()
             vehicle.close()
