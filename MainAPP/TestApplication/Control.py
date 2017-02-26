@@ -1,7 +1,7 @@
 from threading import Thread
 from TestCases  import GraphSearchTest, Model3DSpaceTest, SceneModelTest, Model3DTest
 from ImageApi import Filter, CameraApi, CameraApi2
-from VehicleApi import QuadcopterApi 
+from VehicleApi import QuadcopterApi
 from ImageProcessor import ImageProcessor
 from time import sleep
 from datetime import datetime 
@@ -99,12 +99,14 @@ class BaseControl(Thread):
             
         # Ad-hoc vectorization test
         elif testCase == 6:
+            print "testcase6 !"
             flt = Filter()
             sourceImage = flt.loadCvImage('TestPictures/big_map.png')
             processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
             sourceVectors = processor.getVectorRepresentation(sourceImage)
+            print sourceVectors['vect']
             GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
-                    
+
         # Test komunikacji po MavLink
         elif testCase == 7:
             print datetime.now(), " - Mavlink test "

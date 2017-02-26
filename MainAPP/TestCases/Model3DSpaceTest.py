@@ -19,7 +19,7 @@ def loadImagesWithAngles(filesList, debugLevel):
         image = flt.loadCvImage(fileSpec['file'][0], processor.imgResizeScale)
         photoAngle = fileSpec['file'][1]
         vectorImage = processor.getVectorRepresentation(image, flt.prepareImage)
-        imageSet.append([vectorImage['vect'], photoAngle])  
+        imageSet.append([vectorImage['vect'], photoAngle])
         GnuplotDrawer.printVectorPicture(vectorImage['vect'], vectorImage['domain'])
     model3D = processor.create3DStructureFromVectors(imageSet) 
     model3D.showAll3D()

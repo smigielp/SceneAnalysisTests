@@ -6,5 +6,9 @@
 <path>/${PROJECT_DIR_NAME}/MainAPP</path>
 <path>/${PROJECT_DIR_NAME}/MainAPP/TestApplication</path>
 <path>/${PROJECT_DIR_NAME}/MainAPP/TestCases</path>
+<path>/${PROJECT_DIR_NAME}</path>
+<path>/${PROJECT_DIR_NAME}/.settings</path>
+<path>/${PROJECT_DIR_NAME}/Parameters</path>
+<path>/${PROJECT_DIR_NAME}/TestPictures</path>
 </pydev_pathproperty>
 </pydev_project>
