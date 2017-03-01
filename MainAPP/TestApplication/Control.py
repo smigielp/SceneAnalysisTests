@@ -1,5 +1,6 @@
 from threading import Thread
 
+import MovementControlTest
 import MovementTracker
 from TestCases  import GraphSearchTest, Model3DSpaceTest, SceneModelTest, Model3DTest
 from ImageApi import Filter, CameraApi, CameraApi2
@@ -136,51 +137,9 @@ class BaseControl(Thread):
         elif testCase == 8:
             print "Testing movement control"
 
-            sitl = SITL()
-            sitl.download('copter', '3.3', verbose=True)
-            sitl_args = ['-I0', '--model', 'quad', '--home=49.9880962,19.90333,584,353']
-            sitl.launch(sitl_args, await_ready=True, restart=True)
-            print "Connecting to vehicle on: 'tcp:127.0.0.1:5760'"
-            vehicle = QuadcopterApi('tcp:127.0.0.1:5760')
-            print vehicle.quad.capabilities
-
-            vehicle.setModeGuided()
-            MovementTracker.start(vehicle)
-            vehicle.takeoff()
-            sleep(1)
-
-            #vehicle.moveForward(-1)
-            vehicle.commandQueue.setMode(vehicle.commandQueue.Mode.IMM_EXECUTE)
-            vehicle.commandQueue.goto(-vehicle.quad.location.local_frame.north,-vehicle.quad.location.local_frame.east)
-            print "start from: ", vehicle.quad.location.local_frame
-            print "start heading: " + str(vehicle.quad.heading)
-            vehicle.commandQueue.setMode(vehicle.commandQueue.Mode.QUEUE_COMMANDS)
-            vehicle.commandQueue.moveForward(-1)
-            vehicle.commandQueue.addCommandByName("changeHeading", 0, False)
-            vehicle.commandQueue.moveForward(2)
-            vehicle.commandQueue.moveToLocRelativeHeading(2,2)
-            vehicle.commandQueue.moveToLocRelativeHeading(-4,-2)
-            vehicle.commandQueue.confirm()
-            print "end on: " ,vehicle.quad.location.local_frame
-            print "heading: " + str(vehicle.quad.heading)
-            '''vehicle.changeHeading(0, False)
-            print "start from: ", vehicle.quad.location.local_frame
-            print "start heading: " + str(vehicle.quad.heading)
-            vehicle.moveForward(2)
-            print "first phase ended: ", vehicle.quad.location.local_frame
-            print "heading: " + str(vehicle.quad.heading)
-            vehicle.moveToLocRelativeHeading(2, 2)
-            print "second phase ended: ", vehicle.quad.location.local_frame
-            print "heading: " + str(vehicle.quad.heading)
-            vehicle.moveToLocRelativeHeading(-4, -2, False)
-            sleep(4)
-            print "end on: " ,vehicle.quad.location.local_frame
-            print "heading: " + str(vehicle.quad.heading)'''
-
-            MovementTracker.stop()
-            vehicle.close()
-            #sitl.stop()
-            print("Completed")
+            MovementControlTest.createVehicle()
+            MovementControlTest.createGUI()
+            return
 
 
 
