@@ -110,7 +110,7 @@ class BaseControl(Thread):
             sourceImage = flt.loadCvImage('TestPictures/big_map.png')
             processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
             sourceVectors = processor.getVectorRepresentation(sourceImage)
-            print sourceVectors['vect']
+            print "****",sourceVectors['vect']
             GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
 
         # Test komunikacji po MavLink
