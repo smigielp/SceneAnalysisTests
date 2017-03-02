@@ -110,7 +110,7 @@ class BaseControl(Thread):
             flt = Filter()
             sourceImage = flt.loadCvImage('TestPictures/big_map.png')
             processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
-            sourceVectors = processor.getVectorRepresentation(sourceImage)
+            sourceVectors = processor.getVectorRepresentation(sourceImage, self.filter.prepareImage)
             print "****",sourceVectors['vect']
             GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
 
