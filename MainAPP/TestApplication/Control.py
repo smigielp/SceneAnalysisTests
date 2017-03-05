@@ -136,14 +136,8 @@ class BaseControl(Thread):
             sleep(0.5)
         elif testCase == 8:
             print "Testing movement control"
-
-            MovementControlTest.createVehicle()
-            MovementControlTest.createGUI()
+            MovementControlTest.runTest()
             return
-
-
-
-
 
     def processOpenedFile(self, filename):
         imagecv = self.filter.loadCvImage(filename)
