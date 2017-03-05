@@ -8,6 +8,7 @@ from VehicleApi import QuadcopterApi
 from ImageProcessor import ImageProcessor
 from time import sleep
 from datetime import datetime
+from Utils import getCentroid
 import GnuplotDrawer
 import sys
 
@@ -106,12 +107,12 @@ class BaseControl(Thread):
 
         # Ad-hoc vectorization test
         elif testCase == 6:
-            print "testcase6 !"
             flt = Filter()
             sourceImage = flt.loadCvImage('TestPictures/big_map.png')
             processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
             sourceVectors = processor.getVectorRepresentation(sourceImage, self.filter.prepareImage)
             print "****",sourceVectors['vect']
+            print "\n", Utils.getCentroid(sourceVectors['vect'][0])
             GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
 
         # Test komunikacji po MavLink
