@@ -4,11 +4,10 @@ import MovementControlTest
 import MovementTracker
 from TestCases  import GraphSearchTest, Model3DSpaceTest, SceneModelTest, Model3DTest
 from ImageApi import Filter, CameraApi, CameraApi2
-from VehicleApi import QuadcopterApi
 from ImageProcessor import ImageProcessor
 from time import sleep
 from datetime import datetime
-from Utils import getCentroid
+from Utils import getCentroid, calcMoveToTargetHorizont
 import GnuplotDrawer
 import sys
 
@@ -111,8 +110,9 @@ class BaseControl(Thread):
             sourceImage = flt.loadCvImage('TestPictures/big_map.png')
             processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
             sourceVectors = processor.getVectorRepresentation(sourceImage, self.filter.prepareImage)
-            print "****",sourceVectors['vect']
-            print "\n", Utils.getCentroid(sourceVectors['vect'][0])
+            targetCoords=getCentroid(sourceVectors['vect'][2])
+            print targetCoords
+            print "Distance to target: ", calcMoveToTargetHorizont(targetCoords, 10, 90, 30, 60)
             GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
 
         # Test komunikacji po MavLink
