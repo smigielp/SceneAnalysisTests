@@ -3,6 +3,8 @@ Created on 1 mar 2017
 
 @author: Mateusz Raczynski
 '''
+from time import sleep
+
 import numpy as np
 
 import MovementTracker
@@ -123,6 +125,8 @@ def _switchMode(event):
 def _onClosing():
     MovementTracker.stop()
     root.destroy()
+    while vehicle is None:
+        sleep(0.5)
     vehicle.close()
     sitl.stop()
     print("Completed")
@@ -156,6 +160,20 @@ def createGUI():
     thread.run = _createGUI
     thread.start()
 
+manual = """
+a - go left
+d - go right
+w - go forward
+s - go back
+q - rotate left
+e - rotate right
+t - return to [0,0,4]
+c - switch camera position
+left control - decrease height
+space - increase height
+enter - confirm command queue
+r - switch command queue mode
+"""
 
 def _createGUI():
     global root
@@ -173,6 +191,13 @@ def _createGUI():
     root.bind('<Return>', _confirmQueue)
     root.bind('r', _switchMode)
     root.protocol("WM_DELETE_WINDOW", _onClosing)
+    text = Tkinter.Text(root)
+    text.insert(Tkinter.INSERT,manual)
+    text.tag_configure("center", justify='center')
+    text.tag_add("center", 1.0, "end")
+
+    text.config(state=Tkinter.DISABLED)
+    text.pack()
     root.mainloop()
 
 
