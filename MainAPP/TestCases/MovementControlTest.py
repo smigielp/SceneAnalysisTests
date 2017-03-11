@@ -204,9 +204,11 @@ def _createGUI():
 def runTest():
     createGUI()
     createVehicle()
-    vis = vehicle
+    veh = vehicle
 
-    Visualizer.createWindow(vis, prepVehicle)
+    window = Visualizer.createWindow(veh)
+    window.cameraC.moveFRU(f=-2)
+    prepVehicle()
 
 
 if __name__ == "__main__":
