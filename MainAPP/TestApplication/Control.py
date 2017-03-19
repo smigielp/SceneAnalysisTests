@@ -8,7 +8,7 @@ from ImageProcessor import ImageProcessor
 from Recognition import FuzzyShapeRecognition
 from time import sleep
 from datetime import datetime
-from Utils import getCentroid, calcMoveToTargetHorizont
+from Utils import getCentroid, calcMoveToTargetHorizont, calcHeadingChangeForFrontPhoto
 import GnuplotDrawer
 import sys
 
@@ -114,8 +114,11 @@ class BaseControl(Thread):
             processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
             sourceVectors = processor.getVectorRepresentation(sourceImage, self.filter.prepareImage)
             targetCoords=getCentroid(sourceVectors['vect'][2])
+            print sourceVectors['vect']
             print targetCoords
             print "Distance to target: ", calcMoveToTargetHorizont(targetCoords, 10, 90, 30, 60)
+            for i in range(len(sourceVectors['vect'])):
+                print "Heading change for object number ", i, calcHeadingChangeForFrontPhoto(sourceVectors['vect'][i]), "degrees"
             GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
 
         # Test komunikacji po MavLink

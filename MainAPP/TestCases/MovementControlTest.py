@@ -3,6 +3,8 @@ Created on 1 mar 2017
 
 @author: Mateusz Raczynski
 '''
+from time import sleep
+
 import numpy as np
 
 import MovementTracker
@@ -128,6 +130,8 @@ def _setGuidedMode(event):
 def _onClosing():
     MovementTracker.stop()
     root.destroy()
+    while vehicle is None:
+        sleep(0.5)
     vehicle.close()
     if sitl is not None:
         sitl.stop()
@@ -160,6 +164,20 @@ def createGUI():
     thread.run = _createGUI
     thread.start()
 
+manual = """
+a - go left
+d - go right
+w - go forward
+s - go back
+q - rotate left
+e - rotate right
+t - return to [0,0,4]
+c - switch camera position
+left control - decrease height
+space - increase height
+enter - confirm command queue
+r - switch command queue mode
+"""
 
 def _createGUI():
     global root
@@ -178,15 +196,23 @@ def _createGUI():
     root.bind('r', _switchMode)
     root.bind('m', _setGuidedMode)
     root.protocol("WM_DELETE_WINDOW", _onClosing)
+    text = Tkinter.Text(root)
+    text.insert(Tkinter.INSERT,manual)
+    text.tag_configure("center", justify='center')
+    text.tag_add("center", 1.0, "end")
+
+    text.config(state=Tkinter.DISABLED)
+    text.pack()
     root.mainloop()
 
 
 def runTest(sitlTest):
     createGUI()
     createVehicle(sitlTest)
-    vis = vehicle
+    veh = vehicle
 
-    Visualizer.createWindow(vis) 
+    window = Visualizer.createWindow(veh)
+    window.cameraC.moveFRU(f=-2)
 
 
 if __name__ == "__main__":
