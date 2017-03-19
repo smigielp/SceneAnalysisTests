@@ -120,35 +120,39 @@ def _switchMode(event):
     vehicle.commandQueue.setMode(modeQueue)
 
 
+def _setGuidedMode(event):
+    vehicle.setMode('GUIDED')
+
+  
+    
 def _onClosing():
     MovementTracker.stop()
     root.destroy()
     vehicle.close()
-    sitl.stop()
+    if sitl is not None:
+        sitl.stop()
     print("Completed")
 
 
-def createVehicle():
+def createVehicle(sitlTest = True):
     global vehicle
-    global sitl
-    sitl = SITL()
-    sitl.download('copter', '3.3', verbose=True)
-    sitl_args = ['-I0', '--model', 'quad', '--home=49.9880962,19.90333,584,353']
-    sitl.launch(sitl_args, await_ready=True, restart=True)
-
-    print "Connecting to vehicle on: 'tcp:127.0.0.1:5760'"
-    vehicle = QuadcopterApi('tcp:127.0.0.1:5760')
-    print vehicle.quad.capabilities
+    if sitlTest:
+        global sitl
+        sitl = SITL()
+        sitl.download('copter', '3.3', verbose=True)
+        sitl_args = ['-I0', '--model', 'quad', '--home=49.9880962,19.90333,584,353']
+        sitl.launch(sitl_args, await_ready=True, restart=True)
+        print "Connecting to vehicle on: 'tcp:127.0.0.1:5760'"
+        vehicle = QuadcopterApi('tcp:127.0.0.1:5760')
+        vehicle.setMode('GUIDED')
+        vehicle.arm()
+        vehicle.takeoff(5)
+        vehicle.getState()
+    else:
+        print "Connecting to vehicle on: '127.0.0.1:14550'"
+        vehicle = QuadcopterApi('127.0.0.1:14550')
     vehicle.commandQueue.shouldMakeAdjustment(True)
-
-    # Visualizer.createWindow(vehicle,False)
     MovementTracker.start(vehicle)
-
-
-def prepVehicle():
-    vehicle.setModeGuided()
-    vehicle.takeoff(5)
-    vehicle.getState()
 
 
 def createGUI():
@@ -172,16 +176,17 @@ def _createGUI():
     root.bind('<space>', _increaseHeight)
     root.bind('<Return>', _confirmQueue)
     root.bind('r', _switchMode)
+    root.bind('m', _setGuidedMode)
     root.protocol("WM_DELETE_WINDOW", _onClosing)
     root.mainloop()
 
 
-def runTest():
+def runTest(sitlTest):
     createGUI()
-    createVehicle()
+    createVehicle(sitlTest)
     vis = vehicle
 
-    Visualizer.createWindow(vis, prepVehicle)
+    Visualizer.createWindow(vis) 
 
 
 if __name__ == "__main__":

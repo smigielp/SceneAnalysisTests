@@ -17,6 +17,10 @@
 	</natures>
 	<variableList>
 		<variable>
+			<name>SceneAnalysisLib</name>
+			<value>file:/E:/Programowanie/workspace/SceneAnalysisLib/src</value>
+		</variable>
+		<variable>
 			<name>TestPictures</name>
 			<value>file:/E:/Programowanie/workspace/3DCapture/TestPictures</value>
 		</variable>

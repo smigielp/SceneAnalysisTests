@@ -2,9 +2,10 @@ from threading import Thread
 
 import MovementControlTest
 import MovementTracker
-from TestCases  import GraphSearchTest, Model3DSpaceTest, SceneModelTest, Model3DTest
+from TestCases import GraphSearchTest, Model3DSpaceTest, SceneModelTest, Model3DTest
 from ImageApi import Filter, CameraApi, CameraApi2
 from ImageProcessor import ImageProcessor
+from Recognition import FuzzyShapeRecognition
 from time import sleep
 from datetime import datetime
 from Utils import getCentroid, calcMoveToTargetHorizont
@@ -31,13 +32,13 @@ class BaseControl(Thread):
                         'Graph partial match',
                         'Graph complete match',
                         'Extended graph partial match',
-                        'Real photo graph match',
-                        'Blank test'
+                        'Real photo recognition test',
+                        'Fuzzy recognition',
                         '3D model building',
                         'Vectorization test',
-                        'MavLink protocol test',
                         'Mavlink test',
-                        'Movement test'
+                        'Movement test',
+                        'Real Quad movement test'
                     ]
 
     def setTestCase(self, testCase):
@@ -48,8 +49,9 @@ class BaseControl(Thread):
 
 
     def run(self):
-        while not self.stopThread and self.cameraApi.isOpened():
-            self.getLiveCameraView()
+        pass
+        #while not self.stopThread and self.cameraApi.isOpened():
+        #    self.getLiveCameraView()
 
     def killApplication(self):
         try:
@@ -91,13 +93,14 @@ class BaseControl(Thread):
                         {'file': ['TestPictures/right_test_5.png', 0.5], 'params': 'parameters_test_5'},
                         {'file': ['TestPictures/top_test_5.png', None], 'params': 'parameters_test_5'}]
             SceneModelTest.buildSceneModel(pictures, DEBUG_LEVEL)
+        
+        # Fuzzy recognition
         elif testCase == 4:
-            pictures = [{'file': ['TestPictures/front_test_6.png', 0], 'params': 'parameters_test_6'},
-                        {'file': ['TestPictures/right_test_6.png', 0.5], 'params': 'parameters_test_6'},
-                        {'file': ['TestPictures/top_test_6.png', None], 'params': 'parameters_test_6'}]
-            Model3DTest.loadImagesWithAngles(pictures, DEBUG_LEVEL)
-
-        #Building 3D model
+            polygon = [[-2, -2], [-2, 2], [2, 2], [2, -2], [-2, -2]]
+            spectrum = FuzzyShapeRecognition.getObjectBorderSpectrum(polygon, angleDensity=5)
+            print spectrum
+            GnuplotDrawer.printPolygonCentroidSpectrum(spectrum)
+        # Building 3D model
         elif testCase == 5:
             pictures = [{'file': ['TestPictures/b2_right_preproc.png', 0.5], 'params': 'parameters_test1'},
                         {'file': ['TestPictures/b2_front_preproc.png', 0], 'params': 'parameters_test1'},
@@ -135,10 +138,18 @@ class BaseControl(Thread):
             imagetk = self.filter.getImageTk(image, self.gui.IMAGE_WIDTH)
             self.gui.showTakenCameraImg(imagetk)
             sleep(0.5)
+            
         elif testCase == 8:
             print "Testing movement control"
-            MovementControlTest.runTest()
+            MovementControlTest.runTest(sitlTest=True)
             return
+        
+        elif testCase == 9:
+            print "Testing movement control"
+            MovementControlTest.runTest(sitlTest=False)
+            return
+        
+        
 
     def processOpenedFile(self, filename):
         imagecv = self.filter.loadCvImage(filename)
