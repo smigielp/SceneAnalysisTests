@@ -115,7 +115,8 @@ class BaseControl(Thread):
             print targetCoords
             print "Distance to target: ", calcMoveToTargetHorizont(targetCoords, 10, 90, 30, 60)
             for i in range(len(sourceVectors['vect'])):
-                print "Heading change for object number ", i, calcHeadingChangeForFrontPhoto(sourceVectors['vect'][i]), "degrees"
+                print "Object number ", i, ":"
+                calcHeadingChangeForFrontPhoto(sourceVectors['vect'][i], sourceVectors['vect'], 50)
             GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
 
         # Test komunikacji po MavLink
