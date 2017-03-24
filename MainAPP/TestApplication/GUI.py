@@ -51,11 +51,11 @@ class GUI(Thread):
         self.radioButtons = []
         for i in range(len(controller.testCasesList)):
             rb = Radiobutton(self.radioFrame, indicatoron=0, text=controller.testCasesList[i], variable=self.testCase, value=i, width=20, padx=10)
-            rb.grid(row=i)
+            rb.grid(row=i%5, column=i/5)
             self.radioButtons.append(rb)
             
-        self.runTestBtn = Button(self.radioFrame, text="run test", command=self.executeTask, padx=10)
-        self.runTestBtn.grid(row=3, column=1)
+        self.runTestBtn = Button(self.funcButtonFrame, text="run test", command=self.executeTask, padx=10)
+        self.runTestBtn.grid(row=1, column=2)
         
         controller.setView(self)        
         self.control = controller        
