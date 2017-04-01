@@ -153,7 +153,8 @@ class BaseControl(Thread):
             
         elif testCase == 8:
             print "Testing movement control"
-            MovementControlTest.runTest(sitlTest=True)
+            #MovementControlTest.runTest(sitlTest=True)
+            MovementControlTest.runRecMovementTest(sitlTest=True)
             return
         
         elif testCase == 9:
