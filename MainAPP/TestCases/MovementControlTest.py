@@ -177,6 +177,7 @@ left control - decrease height
 space - increase height
 enter - confirm command queue
 r - switch command queue mode
+m - set mode of vehicle to Guided
 """
 
 def _createGUI():
