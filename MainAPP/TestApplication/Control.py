@@ -110,15 +110,16 @@ class BaseControl(Thread):
         # Ad-hoc vectorization test
         elif testCase == 6:
             flt = Filter()
-            sourceImage = flt.loadCvImage('TestPictures/big_map.png')
+            sourceImage = flt.loadCvImage('C:/Users/Lukasz/Downloads/test_images/image_test1_30m.jpg')
             processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
             sourceVectors = processor.getVectorRepresentation(sourceImage, self.filter.prepareImage)
             targetCoords=getCentroid(sourceVectors['vect'][2])
             print sourceVectors['vect']
             print targetCoords
             print "Distance to target: ", calcMoveToTargetHorizont(targetCoords, 10, 90, 30, 60)
-            for i in range(len(sourceVectors['vect'])):
-                print "Heading change for object number ", i, calcHeadingChangeForFrontPhoto(sourceVectors['vect'][i]), "degrees"
+            for i, vert in enumerate(sourceVectors['vect']):
+                print "Object number ", i, ":"
+                calcHeadingChangeForFrontPhoto(vert, sourceVectors['vect'], 50)
             GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
 
         # Test komunikacji po MavLink
@@ -144,7 +145,8 @@ class BaseControl(Thread):
             
         elif testCase == 8:
             print "Testing movement control"
-            MovementControlTest.runTest(sitlTest=True)
+            #MovementControlTest.runTest(sitlTest=True)
+            MovementControlTest.runRecMovementTest(sitlTest=True)
             return
         
         elif testCase == 9:

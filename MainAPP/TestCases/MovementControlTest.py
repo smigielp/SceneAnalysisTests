@@ -215,6 +215,110 @@ def runTest(sitlTest):
     window = Visualizer.createWindow(veh)
     window.cameraC.moveFRU(f=-2)
 
+def runRecMovementTest(sitlTest):
+    #todo: make it work with real drone
+    ###################
+    # createGUI() and vehicle
+    createVehicle(sitlTest)
+    veh = vehicle
+    window = Visualizer.createWindow(veh)
+    if not isinstance(veh,VehicleApi.QuadcopterApi):
+        return
+    window.cameraFromVehicle(True)
+
+    ###################
+    # raise heigh enough
+    veh.commandQueue.goto(0.,0.,10,True)
+    veh.commandQueue.changeHeading(120,False)
+    veh.commandQueue.confirm()
+
+    ###################
+    # make a photo
+    veh.setCameraAim(VehicleApi.DOWN)
+    import math
+    window.cameraC.lookAtEulerExt(x=math.radians(-90))
+    sleep(0.5)
+    photo = window.grabFrame()
+
+    controlPoint = window.obtainModelObject()
+    pos =Visualizer.tENUtoXYZ(veh.getPositionVector())
+    print "Making photo at: ",pos
+    controlPoint.data = [pos]
+    controlPoint.color = np.array([0.,0.,1.])
+    controlPoint.render = True
+
+    photoDirection = veh.quad.heading
+    import ImageApi
+    img = ImageApi.PILimageFromArray(photo,window.getWindowSize(),"RGBA",True)
+    img.show()
+    #img.save("image_test.jpg")
+    rawImage = ImageApi.PILImageToCV(img)
+
+    ###################
+    # parse photo
+    from ImageProcessor import ImageProcessor
+    from Control import PARAMETER_FILE_NAME
+    from Utils import getCentroid
+    from Utils import calcMoveToTargetHorizont
+    from Utils import calcHeadingChangeForFrontPhoto
+    import GnuplotDrawer
+    flt = ImageApi.Filter()
+    processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
+    sourceVectors = processor.getVectorRepresentation(rawImage, flt.prepareImage)
+    objectIndex = 0
+    if len(sourceVectors['vect'])<objectIndex+1:
+        print "VECTOR REPRESENTATION HAS INVALID AMOUNT OF OBJECTS ... RETURNING"
+        veh.setCameraAim(VehicleApi.FRONT)
+        window.cameraC.lookAtEulerExt(x=0)
+        return
+    targetCoords = getCentroid(sourceVectors['vect'][objectIndex])
+    print sourceVectors['vect']
+    print targetCoords
+    print "Recognized objects: ",len(sourceVectors['vect'])
+    print "Object number ", objectIndex, ":"
+    result = calcHeadingChangeForFrontPhoto(sourceVectors['vect'][objectIndex], sourceVectors['vect'], 90)
+    if result is None:
+        print "calcHeadingChangeForFrontPhoto RETURNED NONE ... RETURNING"
+        veh.setCameraAim(VehicleApi.FRONT)
+        window.cameraC.lookAtEulerExt(x=0)
+        return
+    photoPoint, headingChange, chosenEdge = result
+    GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
+
+    ###################
+    #reset camera
+    veh.setCameraAim(VehicleApi.FRONT)
+    window.cameraC.lookAtEulerExt(x=0)
+
+    ###################
+    #calc dpos
+    alt = 20
+    imgWidth = window.getWindowSize()[0]
+    imgHeight = window.getWindowSize()[1]
+    fovH = window.cameraC.fieldOfView
+    fovV = fovH*1./window.cameraC.aspect
+    dposToTarget = calcMoveToTargetHorizont(targetCoords, alt, photoDirection, fovV, fovH,resolutionX=imgWidth,resolutionY=imgHeight)
+    dposToPhotoPoint = calcMoveToTargetHorizont(photoPoint, alt, photoDirection, fovV, fovH,resolutionX=imgWidth,resolutionY=imgHeight)
+    print "Distance to target: ", dposToTarget
+    print "Distance to photoPoint: ", dposToPhotoPoint
+
+    ###################
+    #move to calculated position
+    print "Moving by: ",dposToPhotoPoint[0],dposToPhotoPoint[1]
+    print "Height: ",2
+    print "Heading: ",photoDirection+float(headingChange)
+    veh.commandQueue.moveToLocRelativeHeading(dposToPhotoPoint[0],dposToPhotoPoint[1])
+    veh.commandQueue.goto(0.,0.,2,False)
+    #veh.commandQueue.goto(dposToPhotoPoint[0],dposToPhotoPoint[1],2,False) # <-------
+    veh.commandQueue.changeHeading(photoDirection+float(headingChange),False)
+    veh.commandQueue.confirm()
+
+    ###################
+    #make a photo again
+
+    ###################
+    #save it for building 3d model
+
 
 if __name__ == "__main__":
-    runTest()
+    runTest(False)
