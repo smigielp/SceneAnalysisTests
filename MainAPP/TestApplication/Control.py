@@ -116,18 +116,24 @@ class BaseControl(Thread):
             sourceVectors = processor.getVectorRepresentation(sourceImage, self.filter.prepareImage)
             targetCoords=getCentroid(sourceVectors['vect'][2])
             print sourceVectors['vect']
+            print sourceVectors['domain']
             print targetCoords
             print "Distance to target: ", calcMoveToTargetHorizont(targetCoords, 10, 90, 30, 60)
             for i, vert in enumerate(sourceVectors['vect']):
                 print "Object number ", i, ":"
-                ret= calcHeadingChangeForFrontPhoto(vert, sourceVectors['vect'], 90)
+                ret = calcHeadingChangeForFrontPhoto(vert, sourceVectors['vect'], 10, 2, 90, 90, 780, 450)
                 if ret[0] != [-1,-1]:
                     photoPoint = ret[0]
                     if ret[1]:
-                        sourceVectors['vect'].append([photoPoint,[photoPoint[0] + 50, photoPoint[1] + 50 / math.tan(math.radians(ret[1]))]])
+                        sourceVectors['vect'].append([photoPoint,[photoPoint[0] - 50, photoPoint[1] - 50 / math.tan(math.radians(ret[1]))]])
                     else:
                         sourceVectors['vect'].append([photoPoint,[photoPoint[0],photoPoint[1]+50]])
-            #print sourceVectors
+                    # secondPhotoPoint=ret[2]
+                    # if ret[3]:
+                    #     sourceVectors['vect'].append([secondPhotoPoint, [secondPhotoPoint[0] - 50, secondPhotoPoint[1] - 50 / math.tan(math.radians(ret[1]-ret[3]))]])
+                    # else:
+                    #     sourceVectors['vect'].append([secondPhotoPoint, [secondPhotoPoint[0], secondPhotoPoint[1] + 50]])
+            #sourceVectors['domain'][1][1]=365L
             GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
 
         # Test komunikacji po MavLink
