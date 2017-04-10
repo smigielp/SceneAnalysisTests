@@ -4,7 +4,7 @@ import MovementControlTest
 import MovementTracker
 from TestCases import GraphSearchTest, Model3DSpaceTest, SceneModelTest, Model3DTest
 from ImageApi import Filter, CameraApi, CameraApi2
-from ImageProcessor import ImageProcessor
+from ImageProcessor import ImageProcessor, RED, BLUE, YELLOW, MAGENTA, ALL_COLORS
 from Recognition import FuzzyShapeRecognition
 from time import sleep
 from datetime import datetime
@@ -159,6 +159,9 @@ class BaseControl(Thread):
     def processOpenedFile(self, filename):
         imagecv = self.filter.loadCvImage(filename)
         # some processing...        
+        processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
+        sourceVectors = processor.getVectorRepresentationByColor(imagecv, self.filter.prepareImage, MAGENTA)
+        GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
         imagetk = self.filter.getImageTkBGR(imagecv, self.gui.IMAGE_WIDTH)
         self.gui.showOpenedImg(imagetk)
 

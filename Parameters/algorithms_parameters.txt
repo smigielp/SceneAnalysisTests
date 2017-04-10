@@ -1,9 +1,7 @@
 [parameters_3D]
 picNumber = 0
 contrastEnhanceFactor = 1.0  
-imgResizeScale = 0.8
-        
-luminusThreshold = 150
+imgResizeScale = 0.8        
         
 cornerAngle = 0.18
 windowSize = 3
@@ -19,10 +17,9 @@ straightThreshold = 7
 [parameters_test1]
 erosionRepeat = 1
 dilatationRepeat = 1
-imgResizeScale = 1.0       
-luminusThreshold = 240
+imgResizeScale = 1.0    
         
-windowSize = 3
+windowSize = 5
 outlierDistance = 0.005
 closeEdgesDistance = 0.015
         
@@ -36,8 +33,7 @@ filterColor = RED
 erosionRepeat = 1
 dilatationRepeat = 1
 imgResizeScale = 1.0     
-contrastEnhanceFactor = 1.0    
-luminusThreshold = 240
+contrastEnhanceFactor = 1.0  
         
 windowSize = 9
 outlierDist = 2
@@ -54,8 +50,7 @@ filterColor = None
 erosionRepeat = 1
 dilatationRepeat = 1
 imgResizeScale = 1.0   
-contrastEnhanceFactor = 1.0      
-luminusThreshold = 240
+contrastEnhanceFactor = 1.0     
         
 windowSize = 5
 outlierDist = 4
@@ -72,8 +67,7 @@ filterColor = RED
 erosionRepeat = 1
 dilatationRepeat = 1
 imgResizeScale = 1.0    
-contrastEnhanceFactor = 1.0     
-luminusThreshold = 240
+contrastEnhanceFactor = 1.0   
         
 windowSize = 9
 outlierDist = 2
@@ -88,8 +82,7 @@ postprocesLevel = 3
 filterColor = WHITE
 erosionRepeat = 1
 dilatationRepeat = 4
-imgResizeScale = 0.3    
-luminusThreshold = 170
+imgResizeScale = 0.3   
         
 windowSize = 7
 outlierDist = 1
@@ -104,8 +97,7 @@ postprocesLevel = 3
 filterColor = RED
 erosionRepeat = 1
 dilatationRepeat = 1
-imgResizeScale = 1.0         
-luminusThreshold = 190
+imgResizeScale = 1.0  
         
 windowSize = 11
 outlierDist = 1
@@ -121,8 +113,7 @@ filterColor = RED
 erosionRepeat = 1
 dilatationRepeat = 1
 imgResizeScale = 1.0       
-contrastEnhanceFactor = 1.0  
-luminusThreshold = 650
+contrastEnhanceFactor = 1.0 
         
 windowSize = 23
 outlierDist = 1

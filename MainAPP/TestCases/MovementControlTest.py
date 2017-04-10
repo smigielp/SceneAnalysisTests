@@ -250,7 +250,7 @@ def runRecMovementTest(sitlTest):
     photoDirection = veh.quad.heading
     import ImageApi
     img = ImageApi.PILimageFromArray(photo,window.getWindowSize(),"RGBA",True)
-    img.show()
+    ##img.show()
     #img.save("image_test.jpg")
     rawImage = ImageApi.PILImageToCV(img)
 
