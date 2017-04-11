@@ -1,6 +1,5 @@
 [parameters_3D]
 picNumber = 0
-contrastEnhanceFactor = 1.0  
 imgResizeScale = 0.8        
         
 cornerAngle = 0.18
@@ -15,8 +14,6 @@ straightThreshold = 7
 
 
 [parameters_test1]
-erosionRepeat = 1
-dilatationRepeat = 1
 imgResizeScale = 1.0    
         
 windowSize = 5
@@ -29,97 +26,11 @@ postprocesLevel = 1
 
 
 [parameters_test2]
-filterColor = RED
-erosionRepeat = 1
-dilatationRepeat = 1
 imgResizeScale = 1.0     
-contrastEnhanceFactor = 1.0  
         
-windowSize = 9
-outlierDist = 2
+outlierDistance = 0.005
+closeEdgesDistance = 0.015
         
-combThreshold = 12
-angleThreshold = 0.12
-remShortThreshold = 8
 straightThreshold = 6
-postprocesLevel = 3
+postprocesLevel = 1
 
-
-[parameters_big_map_test3]
-filterColor = None
-erosionRepeat = 1
-dilatationRepeat = 1
-imgResizeScale = 1.0   
-contrastEnhanceFactor = 1.0     
-        
-windowSize = 5
-outlierDist = 4
-        
-combThreshold = 20
-angleThreshold = 0.16
-remShortThreshold = 7
-straightThreshold = 0
-postprocesLevel = 3
-
-
-[parameters_test3]
-filterColor = RED
-erosionRepeat = 1
-dilatationRepeat = 1
-imgResizeScale = 1.0    
-contrastEnhanceFactor = 1.0   
-        
-windowSize = 9
-outlierDist = 2
-        
-combThreshold = 12
-angleThreshold = 0.12
-remShortThreshold = 8
-straightThreshold = 6
-postprocesLevel = 3
-
-[parameters_test_5]
-filterColor = WHITE
-erosionRepeat = 1
-dilatationRepeat = 4
-imgResizeScale = 0.3   
-        
-windowSize = 7
-outlierDist = 1
-        
-combThreshold = 12
-angleThreshold = 0.12
-remShortThreshold = 6
-straightThreshold = 4
-postprocesLevel = 3
-
-[parameters_test_6]
-filterColor = RED
-erosionRepeat = 1
-dilatationRepeat = 1
-imgResizeScale = 1.0  
-        
-windowSize = 11
-outlierDist = 1
-        
-combThreshold = 12
-angleThreshold = 0.12
-remShortThreshold = 8
-straightThreshold = 6
-postprocesLevel = 3
-
-[parameters_test_7]
-filterColor = RED
-erosionRepeat = 1
-dilatationRepeat = 1
-imgResizeScale = 1.0       
-contrastEnhanceFactor = 1.0 
-        
-windowSize = 23
-outlierDist = 1
-        
-combThreshold = 50
-angleThreshold = 0.1
-remShortThreshold = 8
-straightThreshold = 6
-postprocesLevel = 2

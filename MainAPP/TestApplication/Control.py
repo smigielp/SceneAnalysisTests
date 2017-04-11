@@ -4,19 +4,18 @@ import MovementControlTest
 import MovementTracker
 from TestCases import GraphSearchTest, Model3DSpaceTest, SceneModelTest, Model3DTest
 from ImageApi import Filter, CameraApi, CameraApi2
-from ImageProcessor import ImageProcessor, RED, BLUE, YELLOW, MAGENTA, ALL_COLORS
+from ImageProcessor import ImageProcessor, RED, BLUE, YELLOW, MAGENTA
 from Recognition import FuzzyShapeRecognition
 from time import sleep
 from datetime import datetime
 from Utils import getCentroid, calcMoveToTargetHorizont, calcHeadingChangeForFrontPhoto
 import GnuplotDrawer
 import sys
-import math
 
 from dronekit_sitl import SITL
 
 
-DEBUG_LEVEL = 0
+DEBUG_LEVEL = 1
 
 PARAMETER_FILE_NAME = "Parameters/algorithms_parameters.txt"
 
@@ -111,29 +110,16 @@ class BaseControl(Thread):
         # Ad-hoc vectorization test
         elif testCase == 6:
             flt = Filter()
-            sourceImage = flt.loadCvImage('TestPictures/big_map.png')
+            sourceImage = flt.loadCvImage('C:/Users/Lukasz/Downloads/test_images/image_test1_30m.jpg')
             processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
             sourceVectors = processor.getVectorRepresentation(sourceImage, self.filter.prepareImage)
             targetCoords=getCentroid(sourceVectors['vect'][2])
             print sourceVectors['vect']
-            print sourceVectors['domain']
             print targetCoords
             print "Distance to target: ", calcMoveToTargetHorizont(targetCoords, 10, 90, 30, 60)
             for i, vert in enumerate(sourceVectors['vect']):
                 print "Object number ", i, ":"
-                ret = calcHeadingChangeForFrontPhoto(vert, sourceVectors['vect'], 10, 2, 90, 90, 780, 450)
-                if ret[0] != [-1,-1]:
-                    photoPoint = ret[0]
-                    if ret[1]:
-                        sourceVectors['vect'].append([photoPoint,[photoPoint[0] - 50, photoPoint[1] - 50 / math.tan(math.radians(ret[1]))]])
-                    else:
-                        sourceVectors['vect'].append([photoPoint,[photoPoint[0],photoPoint[1]+50]])
-                    # secondPhotoPoint=ret[2]
-                    # if ret[3]:
-                    #     sourceVectors['vect'].append([secondPhotoPoint, [secondPhotoPoint[0] - 50, secondPhotoPoint[1] - 50 / math.tan(math.radians(ret[1]-ret[3]))]])
-                    # else:
-                    #     sourceVectors['vect'].append([secondPhotoPoint, [secondPhotoPoint[0], secondPhotoPoint[1] + 50]])
-            #sourceVectors['domain'][1][1]=365L
+                calcHeadingChangeForFrontPhoto(vert, sourceVectors['vect'], 50)
             GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
 
         # Test komunikacji po MavLink
@@ -173,8 +159,8 @@ class BaseControl(Thread):
     def processOpenedFile(self, filename):
         imagecv = self.filter.loadCvImage(filename)
         # some processing...        
-        processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
-        sourceVectors = processor.getVectorRepresentationByColor(imagecv, self.filter.prepareImage, MAGENTA)
+        processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1', inDebugLevel=DEBUG_LEVEL)
+        sourceVectors = processor.getVectorRepresentation(imagecv, self.filter.prepareImage, color=[0, 0, 50])
         GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
         imagetk = self.filter.getImageTkBGR(imagecv, self.gui.IMAGE_WIDTH)
         self.gui.showOpenedImg(imagetk)
