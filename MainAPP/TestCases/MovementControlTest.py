@@ -6,6 +6,7 @@ Created on 1 mar 2017
 from time import sleep
 
 import numpy as np
+from datetime import datetime
 
 import MovementTracker
 import VehicleApi
@@ -125,8 +126,7 @@ def _switchMode(event):
 def _setGuidedMode(event):
     vehicle.setMode('GUIDED')
 
-  
-    
+
 def _onClosing():
     MovementTracker.stop()
     root.destroy()
@@ -138,7 +138,7 @@ def _onClosing():
     print("Completed")
 
 
-def createVehicle(sitlTest = True):
+def createVehicle(sitlTest=True):
     global vehicle
     if sitlTest:
         global sitl
@@ -164,6 +164,7 @@ def createGUI():
     thread.run = _createGUI
     thread.start()
 
+
 manual = """
 a - go left
 d - go right
@@ -178,6 +179,7 @@ space - increase height
 enter - confirm command queue
 r - switch command queue mode
 """
+
 
 def _createGUI():
     global root
@@ -197,7 +199,7 @@ def _createGUI():
     root.bind('m', _setGuidedMode)
     root.protocol("WM_DELETE_WINDOW", _onClosing)
     text = Tkinter.Text(root)
-    text.insert(Tkinter.INSERT,manual)
+    text.insert(Tkinter.INSERT, manual)
     text.tag_configure("center", justify='center')
     text.tag_add("center", 1.0, "end")
 
@@ -214,110 +216,213 @@ def runTest(sitlTest):
     window = Visualizer.createWindow(veh)
     window.cameraC.moveFRU(f=-2)
 
+
+DEBUG_MOVEMENT = True
+
+import math
+import ImageApi
+from ImageProcessor import ImageProcessor
+from TestApplication.Control import PARAMETER_FILE_NAME
+from Utils import getCentroid
+from Utils import calcMoveToTargetHorizont
+from Utils import calcHeadingChangeForFrontPhoto
+import GnuplotDrawer
+
+
 def runRecMovementTest(sitlTest):
-    #todo: make it work with real drone
+    # todo: make it work with real drone
+
     ###################
     # createGUI() and vehicle
     createVehicle(sitlTest)
     veh = vehicle
     window = Visualizer.createWindow(veh)
-    if not isinstance(veh,VehicleApi.QuadcopterApi):
+    if not isinstance(veh, VehicleApi.QuadcopterApi):
         return
     window.cameraFromVehicle(True)
 
+    imgWidth = window.getWindowSize()[0]
+    imgHeight = window.getWindowSize()[1]
+    fovH = window.cameraC.fieldOfView
+    fovV = fovH * 1. / window.cameraC.aspect
+
+    feed = feedInfo()
+    feed.videoFeed = window
+    feed.veh = veh
+    feed.imgWidth = imgWidth
+    feed.imgHeight = imgHeight
+    feed.fovH = fovH
+    feed.fovV = fovV
+
+    findObjectsOnScene(feed)
+
+    feed.veh.commandQueue.goto(0., 0., 10, True)
+    scanObject(feed)
+
+    veh.close()
+
+
+def findObjectsOnScene(feed):
     ###################
     # raise heigh enough
-    veh.commandQueue.goto(0.,0.,10,True)
-    veh.commandQueue.changeHeading(120,False)
-    veh.commandQueue.confirm()
+    feed.veh.commandQueue.goto(0., 0., 25, True)
+    feed.veh.commandQueue.changeHeading(0, False)
+    feed.veh.commandQueue.confirm()
 
     ###################
     # make a photo
-    veh.setCameraAim(VehicleApi.DOWN)
-    import math
-    window.cameraC.lookAtEulerExt(x=math.radians(-90))
+    feed.veh.setCameraAim(VehicleApi.DOWN)
+    feed.videoFeed.cameraC.lookAtEulerExt(x=math.radians(-90))
     sleep(0.5)
-    photo = window.grabFrame()
+    photo = feed.videoFeed.grabFrame()
+    photoDirection = feed.veh.quad.heading
+    photoAlt = feed.veh.getPositionVector()[2]
+    img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
+    if DEBUG_MOVEMENT:
+        saveImageForDebugging(img,"ImageSceneAbove")
+        img.show()
+    # img.save("image_test.jpg")
+    rawImage = ImageApi.PILImageToCV(img)
 
-    controlPoint = window.obtainModelObject()
-    pos =Visualizer.tENUtoXYZ(veh.getPositionVector())
-    print "Making photo at: ",pos
-    controlPoint.data = [pos]
-    controlPoint.color = np.array([0.,0.,1.])
-    controlPoint.render = True
+    if DEBUG_MOVEMENT:
+        controlPoint = feed.videoFeed.obtainModelObject()
+        pos = Visualizer.tENUtoXYZ(feed.veh.getPositionVector())
+        print "Making photo at: ", pos
+        controlPoint.data = [pos]
+        controlPoint.color = np.array([0., 0., 1.])
+        controlPoint.render = True
 
-    photoDirection = veh.quad.heading
-    import ImageApi
-    img = ImageApi.PILimageFromArray(photo,window.getWindowSize(),"RGBA",True)
-    img.show()
-    #img.save("image_test.jpg")
+    ###################
+    # parse photo
+    flt = ImageApi.Filter()
+    processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
+    sourceVectors = processor.getVectorRepresentation(rawImage, flt.prepareImage)
+
+    points = []
+    for objectIndex in range(0, len(sourceVectors['vect'])):
+        targetCoords = getCentroid(sourceVectors['vect'][objectIndex])
+        points.append(targetCoords)
+    if DEBUG_MOVEMENT:
+        gp = GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
+        GnuplotDrawer.saveToFile(gp,"ImageSceneAboveVec",feed.videoFeed.getWindowSize())
+
+    for objectIndex in range(0, len(points)):
+        points[objectIndex] = calcMoveToTargetHorizont(points[objectIndex], photoAlt, photoDirection, feed.fovV, feed.fovH,
+                                                       resolutionX=feed.imgWidth,
+                                                       resolutionY=feed.imgHeight)
+
+    objectNum = feed.veh.commandQueue.visitPoints(points, relativeToStartingPos=True, callbackOnVisited=recognizeObject,
+                                                  callbackArg=feed)
+
+    ###################
+    # reset camera
+    feed.veh.setCameraAim(VehicleApi.FRONT)
+    feed.videoFeed.cameraC.lookAtEulerExt(x=0)
+
+
+def recognizeObject(id, feed):
+    ###################
+    # make a photo
+    feed.veh.setCameraAim(VehicleApi.DOWN)
+    feed.videoFeed.cameraC.lookAtEulerExt(x=math.radians(-90))
+    sleep(0.5)
+    photo = feed.videoFeed.grabFrame()
+    photoDirection = feed.veh.quad.heading
+    photoAlt = feed.veh.getPositionVector()[2]
+    img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
+    if DEBUG_MOVEMENT:
+        saveImageForDebugging(img,"ImageForRecogAbove_"+str(id))
+        img.show()
+    # img.save("image_test.jpg")
     rawImage = ImageApi.PILImageToCV(img)
 
     ###################
     # parse photo
-    from ImageProcessor import ImageProcessor
-    from Control import PARAMETER_FILE_NAME
-    from Utils import getCentroid
-    from Utils import calcMoveToTargetHorizont
-    from Utils import calcHeadingChangeForFrontPhoto
-    import GnuplotDrawer
     flt = ImageApi.Filter()
     processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
     sourceVectors = processor.getVectorRepresentation(rawImage, flt.prepareImage)
+    # recognize
+    found = False
+    if found:
+        return True
+
+
+def scanObject(feed):
+    ###################
+    # make a photo
+    feed.veh.setCameraAim(VehicleApi.DOWN)
+    feed.videoFeed.cameraC.lookAtEulerExt(x=math.radians(-90))
+    sleep(0.5)
+    photo = feed.videoFeed.grabFrame()
+    photoDirection = feed.veh.quad.heading
+    photoAlt = feed.veh.getPositionVector()[2]
+    img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
+    if DEBUG_MOVEMENT:
+        saveImageForDebugging(img,"ImageForScanAbove")
+        img.show()
+    # img.save("image_test.jpg")
+    rawImage = ImageApi.PILImageToCV(img)
+
+    ###################
+    # parse photo
+    flt = ImageApi.Filter()
+    #todo: use only one color here
+    processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
+    sourceVectors = processor.getVectorRepresentation(rawImage, flt.prepareImage)
     objectIndex = 0
-    if len(sourceVectors['vect'])<objectIndex+1:
+    if len(sourceVectors['vect']) < objectIndex + 1:
         print "VECTOR REPRESENTATION HAS INVALID AMOUNT OF OBJECTS ... RETURNING"
-        veh.setCameraAim(VehicleApi.FRONT)
-        window.cameraC.lookAtEulerExt(x=0)
+        feed.veh.setCameraAim(VehicleApi.FRONT)
+        feed.window.cameraC.lookAtEulerExt(x=0)
         return
-    targetCoords = getCentroid(sourceVectors['vect'][objectIndex])
-    print sourceVectors['vect']
-    print targetCoords
-    print "Recognized objects: ",len(sourceVectors['vect'])
+    print "Recognized objects: ", len(sourceVectors['vect'])
     print "Object number ", objectIndex, ":"
-    result = calcHeadingChangeForFrontPhoto(sourceVectors['vect'][objectIndex], sourceVectors['vect'], 90)
-    if result is None:
-        print "calcHeadingChangeForFrontPhoto RETURNED NONE ... RETURNING"
-        veh.setCameraAim(VehicleApi.FRONT)
-        window.cameraC.lookAtEulerExt(x=0)
-        return
-    photoPoint, headingChange, chosenEdge = result
-    GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
+    BUILDING_HEIGHT = 6
+    result = calcHeadingChangeForFrontPhoto(sourceVectors['vect'][objectIndex], sourceVectors['vect'],
+                                            photoAlt, BUILDING_HEIGHT,
+                                            feed.fovH,feed.fovV, feed.imgWidth, feed.imgHeight)
+    photoPoint, headingChange, secondPhotoPoint, seconHeadingChange, chosenEdge = result
+
+    if DEBUG_MOVEMENT:
+        GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
+
+    dposToPhotoPoint = calcMoveToTargetHorizont(photoPoint, photoAlt, photoDirection, feed.fovV, feed.fovH,
+                                                resolutionX=feed.imgWidth,
+                                                resolutionY=feed.imgHeight)
+
+    feed.veh.commandQueue.goto(dposToPhotoPoint[0], dposToPhotoPoint[1], BUILDING_HEIGHT/2, False)  # <-------
+    feed.veh.commandQueue.changeHeading(photoDirection + float(headingChange), False)
+    feed.veh.commandQueue.confirm()
 
     ###################
-    #reset camera
-    veh.setCameraAim(VehicleApi.FRONT)
-    window.cameraC.lookAtEulerExt(x=0)
+    # make a front photo
 
     ###################
-    #calc dpos
-    alt = 20
-    imgWidth = window.getWindowSize()[0]
-    imgHeight = window.getWindowSize()[1]
-    fovH = window.cameraC.fieldOfView
-    fovV = fovH*1./window.cameraC.aspect
-    dposToTarget = calcMoveToTargetHorizont(targetCoords, alt, photoDirection, fovV, fovH,resolutionX=imgWidth,resolutionY=imgHeight)
-    dposToPhotoPoint = calcMoveToTargetHorizont(photoPoint, alt, photoDirection, fovV, fovH,resolutionX=imgWidth,resolutionY=imgHeight)
-    print "Distance to target: ", dposToTarget
-    print "Distance to photoPoint: ", dposToPhotoPoint
+    # go to other position
 
     ###################
-    #move to calculated position
-    print "Moving by: ",dposToPhotoPoint[0],dposToPhotoPoint[1]
-    print "Height: ",2
-    print "Heading: ",photoDirection+float(headingChange)
-    veh.commandQueue.moveToLocRelativeHeading(dposToPhotoPoint[0],dposToPhotoPoint[1])
-    veh.commandQueue.goto(0.,0.,2,False)
-    #veh.commandQueue.goto(dposToPhotoPoint[0],dposToPhotoPoint[1],2,False) # <-------
-    veh.commandQueue.changeHeading(photoDirection+float(headingChange),False)
-    veh.commandQueue.confirm()
+    # make a side photo
 
     ###################
-    #make a photo again
+    # build model
 
-    ###################
-    #save it for building 3d model
 
+class feedInfo(object):
+    def __init__(p):
+        p.videoFeed = None
+        p.veh = None
+        p.imgWidth = 0
+        p.imgHeight = 0
+        p.fovH = 60
+        p.fovV = 90
+
+import os
+def saveImageForDebugging(img, name):
+    path = "debug/screens/"
+    if not os.path.exists(path):
+        os.makedirs(path)
+    img.save(path+name+".png")
+    print datetime.now(),"Saving "+name+" to "+path+name+".png"
 
 if __name__ == "__main__":
     runTest(False)
