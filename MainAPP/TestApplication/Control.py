@@ -4,7 +4,7 @@ import MovementControlTest
 import MovementTracker
 from TestCases import GraphSearchTest, Model3DSpaceTest, SceneModelTest, Model3DTest
 from ImageApi import Filter, CameraApi, CameraApi2
-from ImageProcessor import ImageProcessor
+from ImageProcessor import ImageProcessor, RED, BLUE, YELLOW, MAGENTA
 from Recognition import FuzzyShapeRecognition
 from time import sleep
 from datetime import datetime
@@ -15,7 +15,7 @@ import sys
 from dronekit_sitl import SITL
 
 
-DEBUG_LEVEL = 0
+DEBUG_LEVEL = 1
 
 PARAMETER_FILE_NAME = "Parameters/algorithms_parameters.txt"
 
@@ -159,6 +159,9 @@ class BaseControl(Thread):
     def processOpenedFile(self, filename):
         imagecv = self.filter.loadCvImage(filename)
         # some processing...        
+        processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1', inDebugLevel=DEBUG_LEVEL)
+        sourceVectors = processor.getVectorRepresentation(imagecv, self.filter.prepareImage, color=[0, 0, 50])
+        GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
         imagetk = self.filter.getImageTkBGR(imagecv, self.gui.IMAGE_WIDTH)
         self.gui.showOpenedImg(imagetk)
 

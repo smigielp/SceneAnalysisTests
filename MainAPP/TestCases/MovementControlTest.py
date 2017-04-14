@@ -164,7 +164,6 @@ def createGUI():
     thread.run = _createGUI
     thread.start()
 
-
 manual = """
 a - go left
 d - go right
@@ -178,6 +177,7 @@ left control - decrease height
 space - increase height
 enter - confirm command queue
 r - switch command queue mode
+m - set mode of vehicle to Guided
 """
 
 
