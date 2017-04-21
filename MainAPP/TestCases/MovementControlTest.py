@@ -22,6 +22,7 @@ sitl = None
 root = None
 modeQueue = CommandQueue.Mode.QUEUE_COMMANDS
 modeCamera = VehicleApi.FRONT
+searchedObject = None
 
 
 def _forward(event):
@@ -233,6 +234,7 @@ import GnuplotDrawer
 
 def runRecMovementTest(sitlTest):
     global DEBUG_MOVEMENT
+    global searchedObject
     # todo: make it work with real drone
 
     ###################
@@ -249,6 +251,11 @@ def runRecMovementTest(sitlTest):
         veh.supressMessages(all=True)
         window.cameraFromVehicle(True)
         window.debug_OpenGL = False
+
+    f = ImageApi.Filter()
+    img = f.loadCvImage("TestPictures/searched_object.png")
+    processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
+    searchedObject = processor.getVectorRepresentation(img, f.prepareImage)
 
     imgWidth = window.getWindowSize()[0]
     imgHeight = window.getWindowSize()[1]
@@ -274,7 +281,7 @@ def runRecMovementTest(sitlTest):
 def findObjectsOnScene(feed):
     ###################
     # raise heigh enough
-    feed.veh.commandQueue.goto(0., 0., 25, True)
+    feed.veh.commandQueue.goto(0., 0., 35, True)
     # feed.veh.commandQueue.changeHeading(0, False)
     feed.veh.commandQueue.confirm()
 
@@ -353,6 +360,11 @@ def recognizeObject(id, feed):
     processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
     sourceVectors = processor.getVectorRepresentation(rawImage, flt.prepareImage)
 
+    if DEBUG_MOVEMENT:
+        gp = GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
+        GnuplotDrawer.saveToFile(gp,"ImageRecogAboveVec_"+str(id),feed.videoFeed.getWindowSize())
+
+    global searchedObject
     ###################
     # recognize
     found = False
@@ -447,7 +459,7 @@ def scanObject(feed):
     ###################
     # go to other position
     dposToSidePhotoPoint = secondPhotoPos - feed.veh.getPositionVector()
-    feed.veh.commandQueue.goto(dposToFrontPhotoPoint[0], dposToFrontPhotoPoint[1], BUILDING_HEIGHT/2, False)  # <-------
+    feed.veh.commandQueue.goto(dposToSidePhotoPoint[0], dposToSidePhotoPoint[1], BUILDING_HEIGHT/2, False)  # <-------
     feed.veh.commandQueue.changeHeading(secondPhotoDirection, False)
     feed.veh.commandQueue.confirm()
 
