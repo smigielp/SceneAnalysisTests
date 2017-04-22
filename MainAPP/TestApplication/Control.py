@@ -126,10 +126,10 @@ class BaseControl(Thread):
                         sourceVectors['vect'].append([ret[0], [ret[0][0]+50, ret[0][1] + 50 * math.tan(math.radians(90-ret[1]))]])
                     else:
                         sourceVectors['vect'].append([ret[0], [ret[0][0], ret[0][1]+50]])
-                    # if ret[3]:
-                    #     sourceVectors['vect'].append([ret[2], [ret[2][0]+50, (ret[2][0]+50)*math.tan(math.radians(ret[3]))]])
-                    # else:
-                    #     sourceVectors['vect'].append([ret[2], [ret[2][0], ret[2][1]+50]])
+                    if ret[3]:
+                        sourceVectors['vect'].append([ret[2], [ret[2][0]+50, ret[2][1] + 50 * math.tan(math.radians(180 - ret[1]))]])
+                    else:
+                        sourceVectors['vect'].append([ret[2], [ret[2][0], ret[2][1]+50]])
             GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
 
         # Test komunikacji po MavLink
