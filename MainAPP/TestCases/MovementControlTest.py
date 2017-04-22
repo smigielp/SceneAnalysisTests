@@ -410,7 +410,7 @@ def scanObject(feed):
                                             photoAlt, BUILDING_HEIGHT,
                                             feed.fovH,feed.fovV,
                                             mapWidth=feed.imgWidth, mapHeight=feed.imgHeight,
-                                            photoHeight=feed.imgHeight/feed.imgWidth)
+                                            photoHeight=photoAlt/BUILDING_HEIGHT)
     photoPoint, headingChange, secondPhotoPoint, seconHeadingChange, chosenEdge = result
 
     if DEBUG_MOVEMENT:
@@ -425,7 +425,9 @@ def scanObject(feed):
                                                 resolutionY=feed.imgHeight)
     dposToSidePhotoPoint = np.array(dposToSidePhotoPoint)
     dposToSidePhotoPoint.resize(3)
+    print dposToSidePhotoPoint
     secondPhotoPos = photoPos + dposToSidePhotoPoint
+    print secondPhotoPos
     secondPhotoDirection = photoDirection + float(seconHeadingChange)
 
     feed.veh.setCameraAim(VehicleApi.FRONT)
@@ -461,6 +463,8 @@ def scanObject(feed):
     ###################
     # go to other position
     dposToSidePhotoPoint = secondPhotoPos - feed.veh.getPositionVector()
+    print secondPhotoPos
+    print dposToSidePhotoPoint
     feed.veh.commandQueue.goto(dposToSidePhotoPoint[0], dposToSidePhotoPoint[1], 0.5, False)  # <-------
     feed.veh.commandQueue.changeHeading(secondPhotoDirection, False)
     feed.veh.commandQueue.confirm()
