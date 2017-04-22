@@ -406,6 +406,7 @@ def scanObject(feed):
         return
     print "Found objects: ", len(sourceVectors['vect'])
     print "Scanning ", objectIndex, ":"
+    print sourceVectors['vect'][objectIndex]
     result = calcHeadingChangeForFrontPhoto(sourceVectors['vect'][objectIndex], sourceVectors['vect'],
                                             photoAlt, BUILDING_HEIGHT,
                                             feed.fovH,feed.fovV,
