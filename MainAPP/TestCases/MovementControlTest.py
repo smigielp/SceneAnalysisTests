@@ -11,6 +11,7 @@ from datetime import datetime
 import MovementTracker
 import VehicleApi
 import Visualizer
+import cv2
 from CommandQueue import CommandQueue
 from VehicleApi import QuadcopterApi, Thread
 from dronekit_sitl import SITL
@@ -294,12 +295,13 @@ def findObjectsOnScene(feed):
     photoDirection = feed.veh.quad.heading
     photoAlt = feed.veh.getPositionVector()[2]
     img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
-    if DEBUG_MOVEMENT:
-        saveImageForDebugging(img,"ImageSceneAbove")
-        if not IGNORE_POPUP_IMAGES:
-            img.show()
-    # img.save("image_test.jpg")
     rawImage = ImageApi.PILImageToCV(img)
+    if DEBUG_MOVEMENT:
+        saveImageForDebugging(rawImage,"ImageSceneAbove")
+        if not IGNORE_POPUP_IMAGES:
+            cv2.imshow('image', rawImage)
+    # img.save("image_test.jpg")
+    
 
     if DEBUG_MOVEMENT:
         controlPoint = feed.videoFeed.obtainModelObject()
@@ -347,12 +349,11 @@ def recognizeObject(id, feed):
     photoDirection = feed.veh.quad.heading
     photoAlt = feed.veh.getPositionVector()[2]
     img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
-    if DEBUG_MOVEMENT:
-        saveImageForDebugging(img,"ImageForRecogAbove_"+str(id))
-        if not IGNORE_POPUP_IMAGES:
-            img.show()
-    # img.save("image_test.jpg")
     rawImage = ImageApi.PILImageToCV(img)
+    if DEBUG_MOVEMENT:
+        saveImageForDebugging(rawImage,"ImageSceneAbove")
+        if not IGNORE_POPUP_IMAGES:
+            cv2.imshow('image', rawImage)
 
     ###################
     # parse photo
@@ -385,12 +386,11 @@ def scanObject(feed):
     photoAlt = feed.veh.getPositionVector()[2]
     photoPos = feed.veh.getPositionVector()
     img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
-    if DEBUG_MOVEMENT:
-        saveImageForDebugging(img,"ImageForScanAbove")
-        if not IGNORE_POPUP_IMAGES:
-            img.show()
-    # img.save("image_test.jpg")
     rawImage = ImageApi.PILImageToCV(img)
+    if DEBUG_MOVEMENT:
+        saveImageForDebugging(rawImage,"ImageSceneAbove")
+        if not IGNORE_POPUP_IMAGES:
+            cv2.imshow('image', rawImage)
 
     ###################
     # parse photo
@@ -441,12 +441,11 @@ def scanObject(feed):
     scan.frontDirection = feed.veh.quad.heading
     scan.frontPosition = feed.veh.getPositionVector()
     img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
+    rawImage = ImageApi.PILImageToCV(img)
     if DEBUG_MOVEMENT:
-        saveImageForDebugging(img,"ImageScanFront")
+        saveImageForDebugging(rawImage,"ImageSceneAbove")
         if not IGNORE_POPUP_IMAGES:
-            img.show()
-    # img.save("image_test.jpg")
-    scan.frontScan = ImageApi.PILImageToCV(img)
+            cv2.imshow('image', rawImage)
 
     if DEBUG_MOVEMENT:
         controlPoint = feed.videoFeed.obtainModelObject()
@@ -473,12 +472,12 @@ def scanObject(feed):
     scan.sideDirection = feed.veh.quad.heading
     scan.sidePosition = feed.veh.getPositionVector()
     img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
+    rawImage = ImageApi.PILImageToCV(img)
     if DEBUG_MOVEMENT:
-        saveImageForDebugging(img, "ImageScanSide")
+        saveImageForDebugging(rawImage,"ImageSceneAbove")
         if not IGNORE_POPUP_IMAGES:
-            img.show()
-    # img.save("image_test.jpg")
-    scan.sideScan = ImageApi.PILImageToCV(img)
+            cv2.imshow('image', rawImage)
+    scan.sideScan = rawImage
 
     if DEBUG_MOVEMENT:
         controlPoint = feed.videoFeed.obtainModelObject()
@@ -498,13 +497,13 @@ def scanObject(feed):
 
 
 class feedInfo(object):
-    def __init__(p):
-        p.videoFeed = None
-        p.veh = None
-        p.imgWidth = 0
-        p.imgHeight = 0
-        p.fovH = 60
-        p.fovV = 90
+    def __init__(self):
+        self.videoFeed = None
+        self.veh = None
+        self.imgWidth = 0
+        self.imgHeight = 0
+        self.fovH = 60
+        self.fovV = 90
 
 class scanData(object):
     def __init__(self):
@@ -520,8 +519,8 @@ def saveImageForDebugging(img, name):
     path = "debug/screens/"
     if not os.path.exists(path):
         os.makedirs(path)
-    img.save(path+name+".png")
-    print datetime.now(),"Saving "+name+" to "+path+name+".png"
+    cv2.imwrite(path+name+".jpg", img)    
+    print datetime.now(),"Saving "+name+" to "+path+name+".jpg"
 
 if __name__ == "__main__":
     runTest(False)
