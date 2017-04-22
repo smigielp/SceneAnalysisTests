@@ -22,6 +22,7 @@ sitl = None
 root = None
 modeQueue = CommandQueue.Mode.QUEUE_COMMANDS
 modeCamera = VehicleApi.FRONT
+searchedObject = None
 
 
 def _forward(event):
@@ -218,6 +219,8 @@ def runTest(sitlTest):
 
 
 DEBUG_MOVEMENT = True
+IGNORE_POPUP_IMAGES = True
+BUILDING_HEIGHT = 6
 
 import math
 import ImageApi
@@ -230,6 +233,8 @@ import GnuplotDrawer
 
 
 def runRecMovementTest(sitlTest):
+    global DEBUG_MOVEMENT
+    global searchedObject
     # todo: make it work with real drone
 
     ###################
@@ -239,7 +244,18 @@ def runRecMovementTest(sitlTest):
     window = Visualizer.createWindow(veh)
     if not isinstance(veh, VehicleApi.QuadcopterApi):
         return
-    window.cameraFromVehicle(True)
+
+    if not sitlTest:
+        DEBUG_MOVEMENT = False
+    else:
+        veh.supressMessages(all=True)
+        window.cameraFromVehicle(True)
+        window.debug_OpenGL = False
+
+    f = ImageApi.Filter()
+    img = f.loadCvImage("TestPictures/searched_object.png")
+    processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
+    searchedObject = processor.getVectorRepresentation(img, f.prepareImage)
 
     imgWidth = window.getWindowSize()[0]
     imgHeight = window.getWindowSize()[1]
@@ -265,8 +281,8 @@ def runRecMovementTest(sitlTest):
 def findObjectsOnScene(feed):
     ###################
     # raise heigh enough
-    feed.veh.commandQueue.goto(0., 0., 25, True)
-    feed.veh.commandQueue.changeHeading(0, False)
+    feed.veh.commandQueue.goto(0., 0., 35, True)
+    # feed.veh.commandQueue.changeHeading(0, False)
     feed.veh.commandQueue.confirm()
 
     ###################
@@ -280,7 +296,8 @@ def findObjectsOnScene(feed):
     img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
     if DEBUG_MOVEMENT:
         saveImageForDebugging(img,"ImageSceneAbove")
-        img.show()
+        if not IGNORE_POPUP_IMAGES:
+            img.show()
     # img.save("image_test.jpg")
     rawImage = ImageApi.PILImageToCV(img)
 
@@ -332,7 +349,8 @@ def recognizeObject(id, feed):
     img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
     if DEBUG_MOVEMENT:
         saveImageForDebugging(img,"ImageForRecogAbove_"+str(id))
-        img.show()
+        if not IGNORE_POPUP_IMAGES:
+            img.show()
     # img.save("image_test.jpg")
     rawImage = ImageApi.PILImageToCV(img)
 
@@ -341,13 +359,22 @@ def recognizeObject(id, feed):
     flt = ImageApi.Filter()
     processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
     sourceVectors = processor.getVectorRepresentation(rawImage, flt.prepareImage)
+
+    if DEBUG_MOVEMENT:
+        gp = GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
+        GnuplotDrawer.saveToFile(gp,"ImageRecogAboveVec_"+str(id),feed.videoFeed.getWindowSize())
+
+    global searchedObject
+    ###################
     # recognize
     found = False
     if found:
         return True
 
 
+
 def scanObject(feed):
+
     ###################
     # make a photo
     feed.veh.setCameraAim(VehicleApi.DOWN)
@@ -356,10 +383,12 @@ def scanObject(feed):
     photo = feed.videoFeed.grabFrame()
     photoDirection = feed.veh.quad.heading
     photoAlt = feed.veh.getPositionVector()[2]
+    photoPos = feed.veh.getPositionVector()
     img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
     if DEBUG_MOVEMENT:
         saveImageForDebugging(img,"ImageForScanAbove")
-        img.show()
+        if not IGNORE_POPUP_IMAGES:
+            img.show()
     # img.save("image_test.jpg")
     rawImage = ImageApi.PILImageToCV(img)
 
@@ -377,7 +406,6 @@ def scanObject(feed):
         return
     print "Recognized objects: ", len(sourceVectors['vect'])
     print "Object number ", objectIndex, ":"
-    BUILDING_HEIGHT = 6
     result = calcHeadingChangeForFrontPhoto(sourceVectors['vect'][objectIndex], sourceVectors['vect'],
                                             photoAlt, BUILDING_HEIGHT,
                                             feed.fovH,feed.fovV, feed.imgWidth, feed.imgHeight)
@@ -386,22 +414,84 @@ def scanObject(feed):
     if DEBUG_MOVEMENT:
         GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
 
-    dposToPhotoPoint = calcMoveToTargetHorizont(photoPoint, photoAlt, photoDirection, feed.fovV, feed.fovH,
+    dposToFrontPhotoPoint = calcMoveToTargetHorizont(photoPoint, photoAlt, photoDirection, feed.fovV, feed.fovH,
                                                 resolutionX=feed.imgWidth,
                                                 resolutionY=feed.imgHeight)
 
-    feed.veh.commandQueue.goto(dposToPhotoPoint[0], dposToPhotoPoint[1], BUILDING_HEIGHT/2, False)  # <-------
+    dposToSidePhotoPoint = calcMoveToTargetHorizont(secondPhotoPoint, photoAlt, photoDirection, feed.fovV, feed.fovH,
+                                                resolutionX=feed.imgWidth,
+                                                resolutionY=feed.imgHeight)
+    dposToSidePhotoPoint = np.array(dposToSidePhotoPoint)
+    dposToSidePhotoPoint.resize(3)
+    secondPhotoPos = photoPos + dposToSidePhotoPoint
+    secondPhotoDirection = photoDirection + float(seconHeadingChange)
+
+    feed.veh.commandQueue.goto(dposToFrontPhotoPoint[0], dposToFrontPhotoPoint[1], BUILDING_HEIGHT/2, False)  # <-------
     feed.veh.commandQueue.changeHeading(photoDirection + float(headingChange), False)
     feed.veh.commandQueue.confirm()
 
+    scan = scanData()
+
     ###################
     # make a front photo
+    feed.veh.setCameraAim(VehicleApi.FRONT)
+    feed.videoFeed.cameraC.lookAtEulerExt(x=math.radians(0))
+    sleep(0.5)
+    photo = feed.videoFeed.grabFrame()
+    scan.frontDirection = feed.veh.quad.heading
+    scan.frontPosition = feed.veh.getPositionVector()
+    img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
+    if DEBUG_MOVEMENT:
+        saveImageForDebugging(img,"ImageScanFront")
+        if not IGNORE_POPUP_IMAGES:
+            img.show()
+    # img.save("image_test.jpg")
+    scan.frontScan = ImageApi.PILImageToCV(img)
+
+    if DEBUG_MOVEMENT:
+        controlPoint = feed.videoFeed.obtainModelObject()
+        pos = Visualizer.tENUtoXYZ(feed.veh.getPositionVector())
+        print "Making photo at: ", pos
+        controlPoint.data = [pos]
+        controlPoint.color = np.array([0., 0., 1.])
+        controlPoint.render = True
 
     ###################
     # go to other position
+    dposToSidePhotoPoint = secondPhotoPos - feed.veh.getPositionVector()
+    feed.veh.commandQueue.goto(dposToSidePhotoPoint[0], dposToSidePhotoPoint[1], BUILDING_HEIGHT/2, False)  # <-------
+    feed.veh.commandQueue.changeHeading(secondPhotoDirection, False)
+    feed.veh.commandQueue.confirm()
 
     ###################
     # make a side photo
+
+    feed.veh.setCameraAim(VehicleApi.FRONT)
+    feed.videoFeed.cameraC.lookAtEulerExt(x=math.radians(0))
+    sleep(0.5)
+    photo = feed.videoFeed.grabFrame()
+    scan.sideDirection = feed.veh.quad.heading
+    scan.sidePosition = feed.veh.getPositionVector()
+    img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
+    if DEBUG_MOVEMENT:
+        saveImageForDebugging(img, "ImageScanSide")
+        if not IGNORE_POPUP_IMAGES:
+            img.show()
+    # img.save("image_test.jpg")
+    scan.sideScan = ImageApi.PILImageToCV(img)
+
+    if DEBUG_MOVEMENT:
+        controlPoint = feed.videoFeed.obtainModelObject()
+        pos = Visualizer.tENUtoXYZ(feed.veh.getPositionVector())
+        print "Making photo at: ", pos
+        controlPoint.data = [pos]
+        controlPoint.color = np.array([0., 0., 1.])
+        controlPoint.render = True
+
+    ###################
+    # reset camera
+    feed.veh.setCameraAim(VehicleApi.FRONT)
+    feed.videoFeed.cameraC.lookAtEulerExt(x=0)
 
     ###################
     # build model
@@ -415,6 +505,15 @@ class feedInfo(object):
         p.imgHeight = 0
         p.fovH = 60
         p.fovV = 90
+
+class scanData(object):
+    def __init__(self):
+        self.frontScan = None
+        self.frontPosition = None
+        self.frontDirection = None
+        self.sideScan = None
+        self.sidePosition = None
+        self.sideDirection = None
 
 import os
 def saveImageForDebugging(img, name):
