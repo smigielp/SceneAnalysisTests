@@ -21,6 +21,7 @@ outlierDistance = 0.005
 closeEdgesDistance = 0.015
         
 straightThreshold = 6
+angleThreshold = 0.09
 postprocesLevel = 1
 
 

@@ -95,7 +95,7 @@ class BaseControl(Thread):
                         {'file': ['TestPictures/top_test_5.png', None], 'params': 'parameters_test_5'}]
             SceneModelTest.buildSceneModel(pictures, DEBUG_LEVEL)
         
-        # Fuzzy recognition
+        # Fuzzy Recognition
         elif testCase == 4:
             polygon = [[-2, -2], [-2, 2], [2, 2], [2, -2], [-2, -2]]
             spectrum = FuzzyShapeRecognition.getObjectBorderSpectrum(polygon, angleDensity=5)
@@ -164,6 +164,11 @@ class BaseControl(Thread):
             MovementControlTest.runTest(sitlTest=False)
             return
         
+        elif testCase == 10:
+            f = Filter()
+            img = f.loadCvImage("TestPictures/searched_object.png")
+            processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
+            searchedObject = processor.getVectorRepresentation(img, f.prepareImage, RED)
         
 
     def processOpenedFile(self, filename):

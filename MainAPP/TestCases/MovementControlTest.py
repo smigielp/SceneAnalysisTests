@@ -11,6 +11,7 @@ from datetime import datetime
 import MovementTracker
 import VehicleApi
 import Visualizer
+import ShapeRecognition
 import cv2
 from CommandQueue import CommandQueue
 from VehicleApi import QuadcopterApi, Thread
@@ -225,7 +226,7 @@ BUILDING_HEIGHT = 6
 
 import math
 import ImageApi
-from ImageProcessor import ImageProcessor
+from ImageProcessor import ImageProcessor, RED
 from TestApplication.Control import PARAMETER_FILE_NAME
 from Utils import getCentroid
 from Utils import calcMoveToTargetHorizont
@@ -236,6 +237,7 @@ import GnuplotDrawer
 def runRecMovementTest(sitlTest):
     global DEBUG_MOVEMENT
     global searchedObject
+    global foundObjColor
     # todo: make it work with real drone
 
     ###################
@@ -256,7 +258,16 @@ def runRecMovementTest(sitlTest):
     f = ImageApi.Filter()
     img = f.loadCvImage("TestPictures/searched_object.png")
     processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
-    searchedObject = processor.getVectorRepresentation(img, f.prepareImage)
+    vectorizedPolygonSet = processor.getVectorRepresentation(img, f.prepareImage, RED)
+    # checking if we have only one searched object
+    if len(vectorizedPolygonSet['vect']) != 1:
+        raise "Exactly one searched object should be provided"
+    
+    searchedObject = vectorizedPolygonSet['vect'][0]  
+    
+    if DEBUG_MOVEMENT:
+        gp = GnuplotDrawer.printVectorPicture(searchedObject, vectorizedPolygonSet['domain']) 
+        GnuplotDrawer.saveToFile(gp,"SearchedObject",vectorizedPolygonSet['domain'])
 
     imgWidth = window.getWindowSize()[0]
     imgHeight = window.getWindowSize()[1]
@@ -322,7 +333,7 @@ def findObjectsOnScene(feed):
         targetCoords = getCentroid(sourceVectors['vect'][objectIndex])
         points.append(targetCoords)
     if DEBUG_MOVEMENT:
-        gp = GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
+        gp =GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain']) 
         GnuplotDrawer.saveToFile(gp,"ImageSceneAboveVec",feed.videoFeed.getWindowSize())
 
     for objectIndex in range(0, len(points)):
@@ -366,10 +377,14 @@ def recognizeObject(id, feed):
         GnuplotDrawer.saveToFile(gp,"ImageRecogAboveVec_"+str(id),feed.videoFeed.getWindowSize())
 
     global searchedObject
+    global foundObjColor
     ###################
     # recognize
-    found = False
+    found = ShapeRecognition.findSinglePattern(searchedObject, sourceVectors['vect'])
     if found:
+        print "OBJECT FOUND!"
+        foundObjIdx = found[0] 
+        foundObjColor = sourceVectors['color'][foundObjIdx]
         return True
 
 
@@ -394,10 +409,12 @@ def scanObject(feed):
 
     ###################
     # parse photo
+    global foundObjColor
+    
     flt = ImageApi.Filter()
     #todo: use only one color here
     processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
-    sourceVectors = processor.getVectorRepresentation(rawImage, flt.prepareImage)
+    sourceVectors = processor.getVectorRepresentation(rawImage, flt.prepareImage, foundObjColor)
     objectIndex = 0
     if len(sourceVectors['vect']) < objectIndex + 1:
         print "VECTOR REPRESENTATION HAS INVALID AMOUNT OF OBJECTS ... RETURNING"
@@ -411,7 +428,7 @@ def scanObject(feed):
                                             feed.fovH,feed.fovV,
                                             mapWidth=feed.imgWidth, mapHeight=feed.imgHeight,
                                             photoHeight=feed.imgHeight/feed.imgWidth)
-    photoPoint, headingChange, secondPhotoPoint, seconHeadingChange, chosenEdge = result
+    photoPoint, headingChange, secondPhotoPoint, secondHeadingChange, chosenEdge = result
 
     if DEBUG_MOVEMENT:
         GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
@@ -426,7 +443,7 @@ def scanObject(feed):
     dposToSidePhotoPoint = np.array(dposToSidePhotoPoint)
     dposToSidePhotoPoint.resize(3)
     secondPhotoPos = photoPos + dposToSidePhotoPoint
-    secondPhotoDirection = photoDirection + float(seconHeadingChange)
+    secondPhotoDirection = photoDirection + float(secondHeadingChange)
 
     feed.veh.setCameraAim(VehicleApi.FRONT)
     feed.videoFeed.cameraC.lookAtEulerExt(x=math.radians(0))
