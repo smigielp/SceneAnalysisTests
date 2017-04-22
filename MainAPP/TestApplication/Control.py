@@ -11,6 +11,7 @@ from datetime import datetime
 from Utils import getCentroid, calcMoveToTargetHorizont, calcHeadingChangeForFrontPhoto
 import GnuplotDrawer
 import sys
+import math
 
 from dronekit_sitl import SITL
 
@@ -110,7 +111,7 @@ class BaseControl(Thread):
         # Ad-hoc vectorization test
         elif testCase == 6:
             flt = Filter()
-            sourceImage = flt.loadCvImage('C:/Users/Lukasz/Downloads/test_images/image_test1_30m.jpg')
+            sourceImage = flt.loadCvImage('TestPictures/big_map.png')
             processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
             sourceVectors = processor.getVectorRepresentation(sourceImage, self.filter.prepareImage)
             targetCoords=getCentroid(sourceVectors['vect'][2])
@@ -119,7 +120,16 @@ class BaseControl(Thread):
             print "Distance to target: ", calcMoveToTargetHorizont(targetCoords, 10, 90, 30, 60)
             for i, vert in enumerate(sourceVectors['vect']):
                 print "Object number ", i, ":"
-                calcHeadingChangeForFrontPhoto(vert, sourceVectors['vect'], 50)
+                ret = calcHeadingChangeForFrontPhoto(vert, sourceVectors['vect'], 10, 3, 90, 90)
+                if ret[0]!=[-1,-1]:
+                    if ret[1]:
+                        sourceVectors['vect'].append([ret[0], [ret[0][0]+50, ret[0][1] + 50 * math.tan(math.radians(90-ret[1]))]])
+                    else:
+                        sourceVectors['vect'].append([ret[0], [ret[0][0], ret[0][1]+50]])
+                    # if ret[3]:
+                    #     sourceVectors['vect'].append([ret[2], [ret[2][0]+50, (ret[2][0]+50)*math.tan(math.radians(ret[3]))]])
+                    # else:
+                    #     sourceVectors['vect'].append([ret[2], [ret[2][0], ret[2][1]+50]])
             GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
 
         # Test komunikacji po MavLink

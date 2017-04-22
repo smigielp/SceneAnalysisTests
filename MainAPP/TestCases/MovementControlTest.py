@@ -404,11 +404,13 @@ def scanObject(feed):
         feed.veh.setCameraAim(VehicleApi.FRONT)
         feed.window.cameraC.lookAtEulerExt(x=0)
         return
-    print "Recognized objects: ", len(sourceVectors['vect'])
-    print "Object number ", objectIndex, ":"
+    print "Found objects: ", len(sourceVectors['vect'])
+    print "Scanning ", objectIndex, ":"
     result = calcHeadingChangeForFrontPhoto(sourceVectors['vect'][objectIndex], sourceVectors['vect'],
                                             photoAlt, BUILDING_HEIGHT,
-                                            feed.fovH,feed.fovV, feed.imgWidth, feed.imgHeight)
+                                            feed.fovH,feed.fovV,
+                                            mapWidth=feed.imgWidth, mapHeight=feed.imgHeight,
+                                            photoHeight=feed.imgHeight/feed.imgWidth)
     photoPoint, headingChange, secondPhotoPoint, seconHeadingChange, chosenEdge = result
 
     if DEBUG_MOVEMENT:
@@ -426,7 +428,11 @@ def scanObject(feed):
     secondPhotoPos = photoPos + dposToSidePhotoPoint
     secondPhotoDirection = photoDirection + float(seconHeadingChange)
 
-    feed.veh.commandQueue.goto(dposToFrontPhotoPoint[0], dposToFrontPhotoPoint[1], BUILDING_HEIGHT/2, False)  # <-------
+    feed.veh.setCameraAim(VehicleApi.FRONT)
+    feed.videoFeed.cameraC.lookAtEulerExt(x=math.radians(0))
+    sleep(0.5)
+
+    feed.veh.commandQueue.goto(dposToFrontPhotoPoint[0], dposToFrontPhotoPoint[1], 0.5, False)  # <-------
     feed.veh.commandQueue.changeHeading(photoDirection + float(headingChange), False)
     feed.veh.commandQueue.confirm()
 
@@ -434,9 +440,6 @@ def scanObject(feed):
 
     ###################
     # make a front photo
-    feed.veh.setCameraAim(VehicleApi.FRONT)
-    feed.videoFeed.cameraC.lookAtEulerExt(x=math.radians(0))
-    sleep(0.5)
     photo = feed.videoFeed.grabFrame()
     scan.frontDirection = feed.veh.quad.heading
     scan.frontPosition = feed.veh.getPositionVector()
@@ -458,7 +461,7 @@ def scanObject(feed):
     ###################
     # go to other position
     dposToSidePhotoPoint = secondPhotoPos - feed.veh.getPositionVector()
-    feed.veh.commandQueue.goto(dposToSidePhotoPoint[0], dposToSidePhotoPoint[1], BUILDING_HEIGHT/2, False)  # <-------
+    feed.veh.commandQueue.goto(dposToSidePhotoPoint[0], dposToSidePhotoPoint[1], 0.5, False)  # <-------
     feed.veh.commandQueue.changeHeading(secondPhotoDirection, False)
     feed.veh.commandQueue.confirm()
 
