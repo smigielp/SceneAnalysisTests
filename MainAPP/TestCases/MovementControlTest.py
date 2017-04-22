@@ -411,7 +411,7 @@ def scanObject(feed):
                                             photoAlt, BUILDING_HEIGHT,
                                             feed.fovH,feed.fovV,
                                             mapWidth=feed.imgWidth, mapHeight=feed.imgHeight,
-                                            photoHeight=photoAlt/BUILDING_HEIGHT)
+                                            photoHeight=0.5/BUILDING_HEIGHT)
     photoPoint, headingChange, secondPhotoPoint, seconHeadingChange, chosenEdge = result
 
     if DEBUG_MOVEMENT:
