@@ -462,7 +462,7 @@ def scanObject(feed):
 
     ###################
     # go to other position
-    dposToSidePhotoPoint = secondPhotoPos - feed.veh.getPositionVector()
+    #dposToSidePhotoPoint = secondPhotoPos - feed.veh.getPositionVector()
     print secondPhotoPos
     print dposToSidePhotoPoint
     feed.veh.commandQueue.goto(dposToSidePhotoPoint[0], dposToSidePhotoPoint[1], 0.5, False)  # <-------
