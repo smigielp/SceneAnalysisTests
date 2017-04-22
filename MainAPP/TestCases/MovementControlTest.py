@@ -351,7 +351,7 @@ def recognizeObject(id, feed):
     img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
     rawImage = ImageApi.PILImageToCV(img)
     if DEBUG_MOVEMENT:
-        saveImageForDebugging(rawImage,"ImageSceneAbove")
+        saveImageForDebugging(rawImage,"ImageForRecogAbove_"+str(id))
         if not IGNORE_POPUP_IMAGES:
             cv2.imshow('image', rawImage)
 
@@ -388,7 +388,7 @@ def scanObject(feed):
     img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
     rawImage = ImageApi.PILImageToCV(img)
     if DEBUG_MOVEMENT:
-        saveImageForDebugging(rawImage,"ImageSceneAbove")
+        saveImageForDebugging(rawImage,"ImageForScanAbove")
         if not IGNORE_POPUP_IMAGES:
             cv2.imshow('image', rawImage)
 
@@ -446,7 +446,7 @@ def scanObject(feed):
     img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
     rawImage = ImageApi.PILImageToCV(img)
     if DEBUG_MOVEMENT:
-        saveImageForDebugging(rawImage,"ImageSceneAbove")
+        saveImageForDebugging(rawImage,"ImageScanFront")
         if not IGNORE_POPUP_IMAGES:
             cv2.imshow('image', rawImage)
 
@@ -477,7 +477,7 @@ def scanObject(feed):
     img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
     rawImage = ImageApi.PILImageToCV(img)
     if DEBUG_MOVEMENT:
-        saveImageForDebugging(rawImage,"ImageSceneAbove")
+        saveImageForDebugging(rawImage, "ImageScanSide")
         if not IGNORE_POPUP_IMAGES:
             cv2.imshow('image', rawImage)
     scan.sideScan = rawImage
