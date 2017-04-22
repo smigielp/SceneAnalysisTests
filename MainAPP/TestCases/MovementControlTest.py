@@ -424,8 +424,7 @@ def scanObject(feed):
     dposToSidePhotoPoint = calcMoveToTargetHorizont(secondPhotoPoint, photoAlt, photoDirection, feed.fovV, feed.fovH,
                                                 resolutionX=feed.imgWidth,
                                                 resolutionY=feed.imgHeight)
-    dposToSidePhotoPoint = np.array(dposToSidePhotoPoint)
-    dposToSidePhotoPoint.resize(3)
+    dposToSidePhotoPoint = np.array([dposToSidePhotoPoint[0],dposToSidePhotoPoint[1],0.])
     print dposToSidePhotoPoint
     secondPhotoPos = photoPos + dposToSidePhotoPoint
     print secondPhotoPos
