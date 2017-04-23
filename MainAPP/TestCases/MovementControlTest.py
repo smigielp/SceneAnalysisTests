@@ -445,7 +445,7 @@ def scanObject(feed):
     print dposToSidePhotoPoint
     secondPhotoPos = photoPos + dposToSidePhotoPoint
     print secondPhotoPos
-    secondPhotoDirection = photoDirection + float(seconHeadingChange)
+    secondPhotoDirection = photoDirection + float(secondHeadingChange)
 
     feed.veh.setCameraAim(VehicleApi.FRONT)
     feed.videoFeed.cameraC.lookAtEulerExt(x=math.radians(0))
