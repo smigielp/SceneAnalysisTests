@@ -221,6 +221,7 @@ def runTest(sitlTest):
 
 
 DEBUG_MOVEMENT = True
+DEBUG_MOVEMENT_DrawPhotoPoints = False
 IGNORE_POPUP_IMAGES = True
 BUILDING_HEIGHT = 6
 
@@ -239,6 +240,8 @@ def runRecMovementTest(sitlTest):
     global searchedObject
     global foundObjColor
     # todo: make it work with real drone
+
+    clearDebugInfo()
 
     ###################
     # createGUI() and vehicle
@@ -314,7 +317,7 @@ def findObjectsOnScene(feed):
     # img.save("image_test.jpg")
     
 
-    if DEBUG_MOVEMENT:
+    if DEBUG_MOVEMENT and DEBUG_MOVEMENT_DrawPhotoPoints:
         controlPoint = feed.videoFeed.obtainModelObject()
         pos = Visualizer.tENUtoXYZ(feed.veh.getPositionVector())
         print "Making photo at: ", pos
@@ -391,6 +394,10 @@ def recognizeObject(id, feed):
 
 def scanObject(feed):
 
+    global foundObjColor
+    if foundObjColor is None:
+        raise RuntimeError("Searched object wasn't found!")
+
     ###################
     # make a photo
     feed.veh.setCameraAim(VehicleApi.DOWN)
@@ -403,16 +410,14 @@ def scanObject(feed):
     img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
     rawImage = ImageApi.PILImageToCV(img)
     if DEBUG_MOVEMENT:
-        saveImageForDebugging(rawImage,"ImageForScanAbove")
+        saveImageForDebugging(rawImage,"ImageSearchedObject")
         if not IGNORE_POPUP_IMAGES:
             cv2.imshow('image', rawImage)
 
     ###################
     # parse photo
-    global foundObjColor
     
     flt = ImageApi.Filter()
-    #todo: use only one color here
     processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
     sourceVectors = processor.getVectorRepresentation(rawImage, flt.prepareImage, foundObjColor)
     objectIndex = 0
@@ -442,20 +447,34 @@ def scanObject(feed):
                                                 resolutionX=feed.imgWidth,
                                                 resolutionY=feed.imgHeight)
     dposToSidePhotoPoint = np.array([dposToSidePhotoPoint[0],dposToSidePhotoPoint[1],0.])
-    print dposToSidePhotoPoint
     secondPhotoPos = photoPos + dposToSidePhotoPoint
-    print secondPhotoPos
     secondPhotoDirection = photoDirection + float(secondHeadingChange)
+
+    scan = scanData()
+
+    feed.veh.commandQueue.changeHeading(photoDirection + float(headingChange), False)
+    feed.veh.commandQueue.confirm()
+
+    sleep(0.5)
+    photo = feed.videoFeed.grabFrame()
+    photoDirection = feed.veh.quad.heading
+    scan.abovePosition = feed.veh.getPositionVector()
+    scan.aboveDirection = photoDirection
+    img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
+    rawImage = ImageApi.PILImageToCV(img)
+    scan.aboveScan = rawImage
+    if DEBUG_MOVEMENT:
+        saveImageForDebugging(rawImage, "ImageForScanAbove")
+        if not IGNORE_POPUP_IMAGES:
+            cv2.imshow('image', rawImage)
 
     feed.veh.setCameraAim(VehicleApi.FRONT)
     feed.videoFeed.cameraC.lookAtEulerExt(x=math.radians(0))
     sleep(0.5)
 
     feed.veh.commandQueue.goto(dposToFrontPhotoPoint[0], dposToFrontPhotoPoint[1], 0.5, False)  # <-------
-    feed.veh.commandQueue.changeHeading(photoDirection + float(headingChange), False)
     feed.veh.commandQueue.confirm()
 
-    scan = scanData()
 
     ###################
     # make a front photo
@@ -469,7 +488,7 @@ def scanObject(feed):
         if not IGNORE_POPUP_IMAGES:
             cv2.imshow('image', rawImage)
 
-    if DEBUG_MOVEMENT:
+    if DEBUG_MOVEMENT and DEBUG_MOVEMENT_DrawPhotoPoints:
         controlPoint = feed.videoFeed.obtainModelObject()
         pos = Visualizer.tENUtoXYZ(feed.veh.getPositionVector())
         print "Making photo at: ", pos
@@ -503,7 +522,7 @@ def scanObject(feed):
             cv2.imshow('image', rawImage)
     scan.sideScan = rawImage
 
-    if DEBUG_MOVEMENT:
+    if DEBUG_MOVEMENT and DEBUG_MOVEMENT_DrawPhotoPoints:
         controlPoint = feed.videoFeed.obtainModelObject()
         pos = Visualizer.tENUtoXYZ(feed.veh.getPositionVector())
         print "Making photo at: ", pos
@@ -537,6 +556,9 @@ class scanData(object):
         self.sideScan = None
         self.sidePosition = None
         self.sideDirection = None
+        self.aboveScan = None
+        self.abovePosition = None
+        self.aboveDirection = None
 
 import os
 def saveImageForDebugging(img, name):
@@ -545,6 +567,22 @@ def saveImageForDebugging(img, name):
         os.makedirs(path)
     cv2.imwrite(path+name+".jpg", img)    
     print datetime.now(),"Saving "+name+" to "+path+name+".jpg"
+import os, shutil
+
+def emptyFolder(path):
+    folder = path
+    for the_file in os.listdir(folder):
+        file_path = os.path.join(folder, the_file)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+                # elif os.path.isdir(file_path): shutil.rmtree(file_path)
+        except Exception as e:
+            print(e)
+
+def clearDebugInfo():
+    emptyFolder("debug/screens")
+    emptyFolder("debug/vecs")
 
 if __name__ == "__main__":
     runTest(False)
