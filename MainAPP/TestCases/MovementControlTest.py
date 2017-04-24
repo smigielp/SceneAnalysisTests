@@ -340,6 +340,10 @@ def findObjectsOnScene(feed):
         gp =GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain']) 
         GnuplotDrawer.saveToFile(gp,"ImageSceneAboveVec",feed.videoFeed.getWindowSize())
 
+
+    feed.veh.commandQueue.goto(0,0,30,False)
+    feed.veh.commandQueue.confirm()
+
     for objectIndex in range(0, len(points)):
         points[objectIndex] = calcMoveToTargetHorizont(points[objectIndex], photoAlt, photoDirection, feed.fovV, feed.fovH,
                                                        resolutionX=feed.imgWidth,
