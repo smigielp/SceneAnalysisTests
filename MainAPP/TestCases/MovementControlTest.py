@@ -25,6 +25,7 @@ root = None
 modeQueue = CommandQueue.Mode.QUEUE_COMMANDS
 modeCamera = VehicleApi.FRONT
 searchedObject = None
+foundObjColor = None
 
 
 def _forward(event):
