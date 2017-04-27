@@ -300,7 +300,7 @@ def runRecMovementTest(sitlTest):
 def findObjectsOnScene(feed):
     ###################
     # raise heigh enough
-    feed.veh.commandQueue.goto(0., 0., 35, True)
+    feed.veh.commandQueue.goto(0., 0., 45, False)
     # feed.veh.commandQueue.changeHeading(0, False)
     feed.veh.commandQueue.confirm()
 
