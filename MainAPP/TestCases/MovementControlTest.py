@@ -358,7 +358,7 @@ def findObjectsOnScene(feed):
         GnuplotDrawer.saveToFile(gp,"ImageSceneAboveVec",feed.videoFeed.getWindowSize())
 
 
-    feed.veh.commandQueue.goto(0,0,30,False)
+    feed.veh.commandQueue.goto(0,0,23,False)
     feed.veh.commandQueue.confirm()
 
     for objectIndex in range(0, len(points)):
@@ -505,6 +505,7 @@ def scanObject(feed):
     scan.frontPosition = feed.veh.getPositionVector()
     img = ImageApi.PILimageFromArray(photo, feed.videoFeed.getWindowSize(), "RGBA", True)
     rawImage = ImageApi.PILImageToCV(img)
+    scan.frontScan = rawImage
     if DEBUG_MOVEMENT:
         saveImageForDebugging(rawImage,"ImageScanFront")
         if not IGNORE_POPUP_IMAGES:
@@ -554,6 +555,39 @@ def scanObject(feed):
     feed.veh.setCameraAim(VehicleApi.FRONT)
     feed.videoFeed.cameraC.lookAtEulerExt(x=0)
 
+
+    flt = ImageApi.Filter()
+    processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
+    sourceVectors = processor.getVectorRepresentation(scan.frontScan, flt.prepareImage, foundObjColor)
+
+    points = []
+    for objectIndex in range(0, len(sourceVectors['vect'])):
+        targetCoords = getCentroid(sourceVectors['vect'][objectIndex])
+        points.append(targetCoords)
+    if DEBUG_MOVEMENT:
+        gp =GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
+        GnuplotDrawer.saveToFile(gp,"FrontScanVec",feed.videoFeed.getWindowSize())
+    scan.frontScan = points
+
+    sourceVectors = processor.getVectorRepresentation(scan.sideScan, flt.prepareImage, foundObjColor)
+    points = []
+    for objectIndex in range(0, len(sourceVectors['vect'])):
+        targetCoords = getCentroid(sourceVectors['vect'][objectIndex])
+        points.append(targetCoords)
+    if DEBUG_MOVEMENT:
+        gp = GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
+        GnuplotDrawer.saveToFile(gp, "SideScanVec", feed.videoFeed.getWindowSize())
+    scan.sideScan = points
+
+    sourceVectors = processor.getVectorRepresentation(scan.aboveScan, flt.prepareImage, foundObjColor)
+    points = []
+    for objectIndex in range(0, len(sourceVectors['vect'])):
+        targetCoords = getCentroid(sourceVectors['vect'][objectIndex])
+        points.append(targetCoords)
+    if DEBUG_MOVEMENT:
+        gp = GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
+        GnuplotDrawer.saveToFile(gp, "AboveScanVec", feed.videoFeed.getWindowSize())
+    scan.aboveScan = points
     ###################
     # build model
 
