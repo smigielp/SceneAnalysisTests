@@ -275,8 +275,12 @@ def runRecMovementTest(sitlTest):
     searchedObject = vectorizedPolygonSet['vect'][0]  
     
     if DEBUG_MOVEMENT:
-        gp = GnuplotDrawer.printVectorPicture(searchedObject, vectorizedPolygonSet['domain']) 
-        GnuplotDrawer.saveToFile(gp,"SearchedObject",vectorizedPolygonSet['domain'])
+        print "=========================="
+        print searchedObject
+        print vectorizedPolygonSet['domain']
+        print "=========================="
+        gp = GnuplotDrawer.printVectorPicture([searchedObject], vectorizedPolygonSet['domain'][:2]) 
+        GnuplotDrawer.saveToFile(gp,"SearchedObject",vectorizedPolygonSet['domain'][:2])
 
     imgWidth = window.getWindowSize()[0]
     imgHeight = window.getWindowSize()[1]
@@ -455,7 +459,7 @@ def scanObject(feed):
                                             photoAlt, BUILDING_HEIGHT,
                                             feed.fovH,feed.fovV,
                                             mapWidth=feed.imgWidth, mapHeight=feed.imgHeight,
-                                            photoHeight=0.5/BUILDING_HEIGHT)
+                                            photoHeight=0.5)
     photoPoint, headingChange, secondPhotoPoint, secondHeadingChange, chosenEdge = result
 
     if DEBUG_MOVEMENT:
