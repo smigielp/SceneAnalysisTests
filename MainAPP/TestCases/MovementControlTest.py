@@ -255,6 +255,8 @@ def runRecMovementTest(sitlTest):
     if not isinstance(veh, VehicleApi.QuadcopterApi):
         return
 
+    veh.commandQueue.shouldMakeAdjustment(False)
+
     if not sitlTest:
         DEBUG_MOVEMENT = False
     else:
@@ -291,10 +293,22 @@ def runRecMovementTest(sitlTest):
 
     findObjectsOnScene(feed)
 
-    feed.veh.commandQueue.goto(0., 0., 10, True)
+    #feed.veh.commandQueue.goto(0., 0., 10, True)
     scanObject(feed)
 
+    MovementTracker.stop()
     veh.close()
+
+    #render trajectory in OpenGL
+    if sitlTest:
+        ren = window.obtainModelObject(modelType='LINES')   # LINE_STRIP
+        ENUPath = MovementTracker.getPath()
+        for i in range(0,len(ENUPath)-1):
+            ENUPath[i] = Visualizer.tENUtoXYZ(ENUPath[i])
+        ren.data = ENUPath
+        ren.color = np.array([1.0,1.0,1.0])
+        ren.render = False
+
 
 
 def findObjectsOnScene(feed):
@@ -450,12 +464,12 @@ def scanObject(feed):
     dposToFrontPhotoPoint = calcMoveToTargetHorizont(photoPoint, photoAlt, photoDirection, feed.fovV, feed.fovH,
                                                 resolutionX=feed.imgWidth,
                                                 resolutionY=feed.imgHeight)
+    dposToFrontPhotoPoint = np.array(dposToFrontPhotoPoint)
 
     dposToSidePhotoPoint = calcMoveToTargetHorizont(secondPhotoPoint, photoAlt, photoDirection, feed.fovV, feed.fovH,
                                                 resolutionX=feed.imgWidth,
                                                 resolutionY=feed.imgHeight)
-    dposToSidePhotoPoint = np.array([dposToSidePhotoPoint[1],dposToSidePhotoPoint[0],0.])
-    secondPhotoPos = photoPos + dposToSidePhotoPoint
+    dposToSidePhotoPoint = np.array(dposToSidePhotoPoint)
     secondPhotoDirection = photoDirection + float(secondHeadingChange)
 
     scan = scanData()
@@ -506,9 +520,6 @@ def scanObject(feed):
 
     ###################
     # go to other position
-    #dposToSidePhotoPoint = secondPhotoPos - feed.veh.getPositionVector()
-    print secondPhotoPos
-    print dposToSidePhotoPoint
     feed.veh.commandQueue.goto(dposToSidePhotoPoint[1], dposToSidePhotoPoint[0], 0.5, False)  # <-------
     feed.veh.commandQueue.changeHeading(secondPhotoDirection, False)
     feed.veh.commandQueue.confirm()
