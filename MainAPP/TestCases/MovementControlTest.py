@@ -454,7 +454,7 @@ def scanObject(feed):
     dposToSidePhotoPoint = calcMoveToTargetHorizont(secondPhotoPoint, photoAlt, photoDirection, feed.fovV, feed.fovH,
                                                 resolutionX=feed.imgWidth,
                                                 resolutionY=feed.imgHeight)
-    dposToSidePhotoPoint = np.array([dposToSidePhotoPoint[0],dposToSidePhotoPoint[1],0.])
+    dposToSidePhotoPoint = np.array([dposToSidePhotoPoint[1],dposToSidePhotoPoint[0],0.])
     secondPhotoPos = photoPos + dposToSidePhotoPoint
     secondPhotoDirection = photoDirection + float(secondHeadingChange)
 
@@ -480,7 +480,7 @@ def scanObject(feed):
     feed.videoFeed.cameraC.lookAtEulerExt(x=math.radians(0))
     sleep(0.5)
 
-    feed.veh.commandQueue.goto(dposToFrontPhotoPoint[0], dposToFrontPhotoPoint[1], 0.5, False)  # <-------
+    feed.veh.commandQueue.goto(dposToFrontPhotoPoint[1], dposToFrontPhotoPoint[0], 0.5, False)  # <-------
     feed.veh.commandQueue.confirm()
 
 
@@ -509,7 +509,7 @@ def scanObject(feed):
     #dposToSidePhotoPoint = secondPhotoPos - feed.veh.getPositionVector()
     print secondPhotoPos
     print dposToSidePhotoPoint
-    feed.veh.commandQueue.goto(dposToSidePhotoPoint[0], dposToSidePhotoPoint[1], 0.5, False)  # <-------
+    feed.veh.commandQueue.goto(dposToSidePhotoPoint[1], dposToSidePhotoPoint[0], 0.5, False)  # <-------
     feed.veh.commandQueue.changeHeading(secondPhotoDirection, False)
     feed.veh.commandQueue.confirm()
 
