@@ -218,8 +218,11 @@ def runTest(sitlTest):
     veh = vehicle
 
     window = Visualizer.createWindow(veh)
-    window.cameraC.moveFRU(f=-2)
+    window.cameraFromVehicle(True)
+    #window.cameraC.moveFRU(f=-2)
 
+if __name__ == "__main__":
+    runTest(True)
 
 DEBUG_MOVEMENT = True
 DEBUG_MOVEMENT_DrawPhotoPoints = False
@@ -589,5 +592,3 @@ def clearDebugInfo():
     emptyFolder("debug/screens")
     emptyFolder("debug/vecs")
 
-if __name__ == "__main__":
-    runTest(False)
