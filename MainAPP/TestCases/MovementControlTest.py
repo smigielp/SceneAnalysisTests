@@ -455,7 +455,7 @@ def scanObject(feed):
                                             photoAlt, BUILDING_HEIGHT,
                                             feed.fovH,feed.fovV,
                                             mapWidth=feed.imgWidth, mapHeight=feed.imgHeight,
-                                            photoHeight=0.5/BUILDING_HEIGHT)
+                                            photoHeight=0.5)
     photoPoint, headingChange, secondPhotoPoint, secondHeadingChange, chosenEdge = result
 
     if DEBUG_MOVEMENT:
@@ -494,7 +494,7 @@ def scanObject(feed):
     feed.videoFeed.cameraC.lookAtEulerExt(x=math.radians(0))
     sleep(0.5)
 
-    feed.veh.commandQueue.goto(dposToFrontPhotoPoint[1], dposToFrontPhotoPoint[0], 0.5, False)  # <-------
+    feed.veh.commandQueue.goto(dposToFrontPhotoPoint[1], dposToFrontPhotoPoint[0], 0.5*BUILDING_HEIGHT, False)  # <-------
     feed.veh.commandQueue.confirm()
 
 
@@ -520,7 +520,7 @@ def scanObject(feed):
 
     ###################
     # go to other position
-    feed.veh.commandQueue.goto(dposToSidePhotoPoint[1], dposToSidePhotoPoint[0], 0.5, False)  # <-------
+    feed.veh.commandQueue.goto(dposToSidePhotoPoint[1], dposToSidePhotoPoint[0], 0.5*BUILDING_HEIGHT, False)  # <-------
     feed.veh.commandQueue.changeHeading(secondPhotoDirection, False)
     feed.veh.commandQueue.confirm()
 
