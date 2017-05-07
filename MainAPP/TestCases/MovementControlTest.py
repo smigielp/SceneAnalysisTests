@@ -305,13 +305,13 @@ def runRecMovementTest(sitlTest):
 
     #render trajectory in OpenGL
     if sitlTest:
-        ren = window.obtainModelObject(modelType='LINES')   # LINE_STRIP
+        ren = window.obtainModelObject(modelType='LINE_STRIP')   # LINE_STRIP
         ENUPath = MovementTracker.getPath()
         for i in range(0,len(ENUPath)-1):
             ENUPath[i] = Visualizer.tENUtoXYZ(ENUPath[i])
         ren.data = ENUPath
         ren.color = np.array([1.0,1.0,1.0])
-        ren.render = False
+        ren.render = True
 
 
 
