@@ -1,4 +1,5 @@
 from Tools import ImageApi, ImageProcessor, GnuplotDrawer
+from ImageProcessor import RED
 import Control
 
 #############################################################################
@@ -18,7 +19,7 @@ def loadImagesWithAngles(filesList, debugLevel):
         processor.setAlgorithmsParameters(Control.PARAMETER_FILE_NAME, fileSpec['params'])
         image = flt.loadCvImage(fileSpec['file'][0], processor.imgResizeScale)
         photoAngle = fileSpec['file'][1]
-        vectorImage = processor.getVectorRepresentation(image, flt.prepareImage)
+        vectorImage = processor.getVectorRepresentation(image, flt.prepareImage, RED)
         imageSet.append([vectorImage['vect'], photoAngle])
         GnuplotDrawer.printVectorPicture(vectorImage['vect'], vectorImage['domain'])
     model3D = processor.create3DStructureFromVectors(imageSet) 

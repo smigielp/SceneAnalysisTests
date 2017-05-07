@@ -16,7 +16,7 @@ straightThreshold = 7
 [parameters_test1]
 imgResizeScale = 1.0    
         
-windowSize = 5
+windowSize = 7
 outlierDistance = 0.005
 closeEdgesDistance = 0.015
         

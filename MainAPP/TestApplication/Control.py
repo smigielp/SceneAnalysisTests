@@ -103,9 +103,9 @@ class BaseControl(Thread):
             GnuplotDrawer.printPolygonCentroidSpectrum(spectrum)
         # Building 3D model
         elif testCase == 5:
-            pictures = [{'file': ['TestPictures/b2_right_preproc.png', 0.5], 'params': 'parameters_test1'},
-                        {'file': ['TestPictures/b2_front_preproc.png', 0], 'params': 'parameters_test1'},
-                        {'file': ['TestPictures/b2_top_preproc.png', None], 'params': 'parameters_test1'}]
+            pictures = [{'file': ['debug/screens/ImageScanSide.jpg', 0.5], 'params': 'parameters_test1'},
+                        {'file': ['debug/screens/ImageScanFront.jpg', 0], 'params': 'parameters_test1'},
+                        {'file': ['debug/screens/ImageForScanAbove.jpg', None], 'params': 'parameters_test1'}]
             Model3DSpaceTest.loadImagesWithAngles(pictures, DEBUG_LEVEL)
 
         # Ad-hoc vectorization test
