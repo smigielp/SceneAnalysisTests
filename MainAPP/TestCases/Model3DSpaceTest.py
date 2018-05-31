@@ -1,5 +1,5 @@
 from Tools import ImageApi, ImageProcessor, GnuplotDrawer
-from ImageProcessor import RED
+from ImageApi import RED
 import Control
 
 #############################################################################

@@ -16,9 +16,9 @@ straightThreshold = 7
 [parameters_test1]
 imgResizeScale = 1.0    
         
-windowSize = 7
-outlierDistance = 0.005
-closeEdgesDistance = 0.015
+windowSize = 5
+outlierDistance = 4
+closeEdgesDistance = 0.05
         
 straightThreshold = 6
 angleThreshold = 0.09
@@ -26,12 +26,16 @@ postprocesLevel = 1
 
 
 
+
 [parameters_test2]
-imgResizeScale = 1.0     
+imgResizeScale = 1.0    
         
+windowSize = 5
 outlierDistance = 0.005
 closeEdgesDistance = 0.015
         
 straightThreshold = 6
+angleThreshold = 0.09
 postprocesLevel = 1
+
 

@@ -1,14 +1,14 @@
 from threading import Thread
 
-import MovementControlTest
-import MovementTracker
-from TestCases import GraphSearchTest, Model3DSpaceTest, SceneModelTest, Model3DTest
+from Tools import MovementTracker
+from TestCases import GraphSearchTest, Model3DSpaceTest, SceneModelTest, Model3DTest, MovementControlTest, UAVTest
 from ImageApi import Filter, CameraApi, CameraApi2
-from ImageProcessor import ImageProcessor, RED, BLUE, YELLOW, MAGENTA
-from Recognition import FuzzyShapeRecognition
+from ImageProcessor import ImageProcessor
 from time import sleep
 from datetime import datetime
 from Utils import getCentroid, calcMoveToTargetHorizont, calcHeadingChangeForFrontPhoto
+#from Recognition import FuzzyShapeRecognition
+import ImageApi
 import GnuplotDrawer
 import sys
 import math
@@ -30,29 +30,31 @@ class BaseControl(Thread):
         self.imgProc = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
         self.stopThread = False
         self.testCasesList = [
-                        'Graph partial match',
-                        'Graph complete match',
-                        'Extended graph partial match',
-                        'Real photo recognition test',
-                        'Fuzzy recognition',
-                        '3D model building',
-                        'Vectorization test',
-                        'Mavlink test',
-                        'Movement test',
-                        'Real Quad movement test'
+                        'Graph partial match', #0
+                        'Graph complete match', #1
+                        'Extended graph partial match', #2
+                        'Real photo recognition test', #3
+                        'Fuzzy recognition', #4
+                        '3D model building', #5
+                        'Vectorization test', #6
+                        'Mavlink test', #7
+                        'Movement test', #8
+                        'UAV Test', #9
+                        'Ad hoc test' #10
                     ]
 
     def setTestCase(self, testCase):
         self.testCase = testCase
+
 
     def setView(self, viewComponent):
         self.gui = viewComponent
 
 
     def run(self):
-        pass
-        #while not self.stopThread and self.cameraApi.isOpened():
-        #    self.getLiveCameraView()
+        # Executing UAVTest
+        self.executeMainTask(9) 
+        
 
     def killApplication(self):
         try:
@@ -103,9 +105,9 @@ class BaseControl(Thread):
             GnuplotDrawer.printPolygonCentroidSpectrum(spectrum)
         # Building 3D model
         elif testCase == 5:
-            pictures = [{'file': ['debug/screens/ImageScanSide.jpg', 0.5], 'params': 'parameters_test1'},
-                        {'file': ['debug/screens/ImageScanFront.jpg', 0], 'params': 'parameters_test1'},
-                        {'file': ['debug/screens/ImageForScanAbove.jpg', None], 'params': 'parameters_test1'}]
+            pictures = [{'file': ['TestPictures/ImageScanSide.jpg', 0.5], 'params': 'parameters_test2'},
+                        {'file': ['TestPictures/ImageScanFront.jpg', 0], 'params': 'parameters_test2'},
+                        {'file': ['TestPictures/ImageForScanAbove.jpg', None], 'params': 'parameters_test2'}]
             Model3DSpaceTest.loadImagesWithAngles(pictures, DEBUG_LEVEL)
 
         # Ad-hoc vectorization test
@@ -113,7 +115,7 @@ class BaseControl(Thread):
             flt = Filter()
             sourceImage = flt.loadCvImage('TestPictures/big_map.png')
             processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
-            sourceVectors = processor.getVectorRepresentation(sourceImage, self.filter.prepareImage)
+            sourceVectors = processor.getVectorRepresentation(sourceImage, self.filter.imagePreprocess, self.filter.imageEdgeDetect)
             targetCoords=getCentroid(sourceVectors['vect'][2])
             print sourceVectors['vect']
             print targetCoords
@@ -144,13 +146,7 @@ class BaseControl(Thread):
             #dron.goto(3, 3)
             #dron.goto_position_relative(4, 0, 0)
             imagecv = self.cameraApi.getFrame()
-
-            image = self.filter.prepareImage(imagecv)
-            vectors = self.imgProc.getVectorRepresentation(image, edgesExposed=False)
-            GnuplotDrawer.printMultiPointPicture(vectors['vect'], vectors['domain'])
-
-            imagetk = self.filter.getImageTk(image, self.gui.IMAGE_WIDTH)
-            self.gui.showTakenCameraImg(imagetk)
+            #self.gui.showTakenCameraImg(imagetk)
             sleep(0.5)
             
         elif testCase == 8:
@@ -161,24 +157,33 @@ class BaseControl(Thread):
         
         elif testCase == 9:
             print "Testing movement control"
-            MovementControlTest.runTest(sitlTest=False)
+            UAVTest.runRecMovementTest(appControl=self, sitlTest=None)
             return
         
         elif testCase == 10:
             f = Filter()
-            img = f.loadCvImage("TestPictures/searched_object.png")
+            img = f.loadCvImage("TestPictures/b_complex.png")
             processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
-            searchedObject = processor.getVectorRepresentation(img, f.prepareImage, RED)
+            searchedObject = processor.getVectorRepresentation(img, f.imagePreprocess, f.imageEdgeDetect, ImageApi.RED)
+            GnuplotDrawer.printVectorPicture(searchedObject['vect'], searchedObject['domain'])
+            print searchedObject
         
+
 
     def processOpenedFile(self, filename):
         imagecv = self.filter.loadCvImage(filename)
         # some processing...        
-        processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1', inDebugLevel=DEBUG_LEVEL)
-        sourceVectors = processor.getVectorRepresentation(imagecv, self.filter.prepareImage, color=[0, 0, 50])
+        image = self.filter.imagePreprocess(imagecv)        
+        self.filter.showImage(image)
+        
+        image = self.filter.imageEdgeDetect(image)       
+        self.filter.showImage(image)
+        
+        processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1', inDebugLevel=DEBUG_LEVEL)        
+        sourceVectors = processor.getVectorRepresentation(imagecv, self.filter.imagePreprocess, self.filter.imageEdgeDetect)
         GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
-        imagetk = self.filter.getImageTkBGR(imagecv, self.gui.IMAGE_WIDTH)
-        self.gui.showOpenedImg(imagetk)
+        #imagetk = self.filter.getImageTkBGR(imagecv, self.gui.IMAGE_WIDTH)
+        #self.gui.showOpenedImg(imagetk)
 
 
     def getCameraFrame(self):
@@ -195,3 +200,6 @@ class BaseControl(Thread):
         imagetk = self.filter.getImageTkBGR(imagecv, self.gui.IMAGE_WIDTH)
         self.gui.showLiveCameraImg(imagetk)
 
+    def showImage(self, imagecv):
+        imagetk = self.filter.getImageTk(imagecv, self.gui.IMAGE_WIDTH)
+        self.gui.showTakenCameraImg(imagetk)

@@ -11,7 +11,8 @@ from datetime import datetime
 import MovementTracker
 import VehicleApi
 import Visualizer
-import ShapeRecognition
+#import ShapeRecognition
+import FuzzyShapeRecognition
 import cv2
 from CommandQueue import CommandQueue
 from VehicleApi import QuadcopterApi, Thread
@@ -231,8 +232,8 @@ BUILDING_HEIGHT = 6
 
 import math
 import ImageApi
-from ImageProcessor import ImageProcessor, RED
-from TestApplication.Control import PARAMETER_FILE_NAME
+from ImageProcessor import ImageProcessor
+#from TestApplication.Control import PARAMETER_FILE_NAME
 from Utils import getCentroid
 from Utils import calcMoveToTargetHorizont
 from Utils import calcHeadingChangeForFrontPhoto
@@ -257,17 +258,18 @@ def runRecMovementTest(sitlTest):
 
     veh.commandQueue.shouldMakeAdjustment(False)
 
-    if not sitlTest:
-        DEBUG_MOVEMENT = False
-    else:
+    if sitlTest:
         veh.supressMessages(all=True)
         window.cameraFromVehicle(True)
         window.debug_OpenGL = False
+    else:
+        DEBUG_MOVEMENT = False
+        
 
     f = ImageApi.Filter()
     img = f.loadCvImage("TestPictures/searched_object.png")
     processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
-    vectorizedPolygonSet = processor.getVectorRepresentation(img, f.prepareImage, RED)
+    vectorizedPolygonSet = processor.getVectorRepresentation(img, f.prepareImage, ImageApi.RED)
     # checking if we have only one searched object
     if len(vectorizedPolygonSet['vect']) != 1:
         raise "Exactly one searched object should be provided"
@@ -318,7 +320,7 @@ def runRecMovementTest(sitlTest):
 def findObjectsOnScene(feed):
     ###################
     # raise heigh enough
-    feed.veh.commandQueue.goto(0., 0., 45, False)
+    feed.veh.commandQueue.goto(0., 0., 38, False)
     # feed.veh.commandQueue.changeHeading(0, False)
     feed.veh.commandQueue.confirm()
 
@@ -362,7 +364,7 @@ def findObjectsOnScene(feed):
         GnuplotDrawer.saveToFile(gp,"ImageSceneAboveVec",feed.videoFeed.getWindowSize())
 
 
-    feed.veh.commandQueue.goto(0,0,23,False)
+    feed.veh.commandQueue.goto(0,0,20,False)
     feed.veh.commandQueue.confirm()
 
     for objectIndex in range(0, len(points)):
@@ -409,12 +411,15 @@ def recognizeObject(id, feed):
     global foundObjColor
     ###################
     # recognize
-    found = ShapeRecognition.findSinglePattern(searchedObject, sourceVectors['vect'])
+    found = FuzzyShapeRecognition.findSinglePattern(searchedObject, sourceVectors['vect'])
     if found:
         print "OBJECT FOUND!"
         foundObjIdx = found[0] 
         foundObjColor = sourceVectors['color'][foundObjIdx]
         return True
+    else:
+        print "NOT THIS ONE..."
+        return False
 
 
 
