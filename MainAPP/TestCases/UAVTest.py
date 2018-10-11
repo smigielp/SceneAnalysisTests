@@ -185,13 +185,31 @@ def runRecMovementTest(appControl, sitlTest=False):
     global searchedObject
     global foundObjColor
     global control
-    
-    #clearDebugInfo()
-    
+        
     control = appControl
+
+    print "loading object to search"
+    image = filter.loadCvImage("TestPictures/b.png")
+    processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1', inDebugLevel=1)
+    searchedObjectVectors = processor.getVectorRepresentation(image, filter.imagePreprocess, filter.imageEdgeDetect, "RED")
+    # checking if we have only one searched object
+    if len(searchedObjectVectors['vect']) != 1:
+        raise "Exactly one searched object should be provided"
+    
+    searchedObject = searchedObjectVectors['vect'][0]  
+    
+    if DEBUG_MOVEMENT:
+        print "=========================="
+        print searchedObject
+        print searchedObjectVectors['domain']
+        print "=========================="
+        gp = GnuplotDrawer.printVectorPicture([searchedObject], searchedObjectVectors['domain'][:2]) 
+        GnuplotDrawer.saveToFile(gp,"SearchedObject",searchedObjectVectors['domain'][:2])
+
 
     ###################
     # createGUI() and vehicle
+    createGUI()
     veh = createVehicle(sitlTest)
 
     print "setting camera parameters"
@@ -227,35 +245,23 @@ def createVehicle(sitlTest):
         vehicle.arm()
         vehicle.takeoff(4)
         vehicle.getState()
-    else:
+    else:                
         vehicle = QuadcopterApi()
         vehicle.setMode('GUIDED')
         
-        
-        vehicle.setCameraAim(VehicleApi.FRONT)
-        
         '''
-        imageOK = 'n'
-        while(imageOK != 'y'):
-            rawImage = camera.getFrame()
-            filter.showImage(rawImage)
-            ###################
-            # parse photo
-            processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
-            sourceVectors = processor.getVectorRepresentation(rawImage, filter.imagePreprocess, filter.imageEdgeDetect)
-            if DEBUG_MOVEMENT:
-                gp = GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain']) 
-                GnuplotDrawer.saveToFile(gp,"ImageSceneAboveVec",(720,540))
-            
-            imageOK = str(raw_input("Is the image OK? (y/n) >"))
-            print imageOK
+        vehicle.setCameraAim(VehicleApi.DOWN)  
+        sleep(WAITING_TIME)
+        
+        rawImage = camera.getFrame()
+        filter.showImage(rawImage)
+                             
+        exit(1)
         '''
-                
+                            
         print "arming robot..."
         vehicle.arm()         
                 
-        #filter.showImage(rawImage)
-        #vehicle.getState()
     vehicle.commandQueue.shouldMakeAdjustment(True)
     MovementTracker.start(vehicle)
     return vehicle
@@ -266,8 +272,8 @@ def createVehicle(sitlTest):
 def findObjectsOnScene(feed):
     ###################
     # take-off and rise high enough
-    targetAlt = 5.0
-    print "takin off to altitude: ", targetAlt
+    targetAlt = 10.0
+    print "taking off to altitude: ", targetAlt
     vehicle.takeoff(targetAlt)   
 
     feed.veh.commandQueue.changeHeading(0, False)
@@ -278,47 +284,43 @@ def findObjectsOnScene(feed):
     feed.veh.setCameraAim(VehicleApi.DOWN)    
     sleep(WAITING_TIME)
     
-    photoDirection = feed.veh.quad.heading
-    photoAltitude = feed.veh.getPositionVector()[2]
+    sourceVectors, photoDirection, photoAltitude = getImageVectorized(feed, imageName="ImageSceneAbove")
     print "photo direction: ", photoDirection
     print "photo altitude: ", photoAltitude
-
-    sourceVectors = getImageVectorized(feed, imageName="ImageSceneAbove")
+    
+    print "vectorized objects points:"
+    print "    ", sourceVectors
     
     points = []
     for objectIndex in range(0, len(sourceVectors['vect'])):
         targetCoords = getCentroid(sourceVectors['vect'][objectIndex])
         points.append(targetCoords)
+        print "    centroid: ", targetCoords
     
     targetAlt = 4.0
     print "lowering down to ", targetAlt
     feed.veh.commandQueue.goto(0,0,targetAlt,False)
     feed.veh.commandQueue.confirm()
 
+    print "points to visit:"
     for objectIndex in range(0, len(points)):
         points[objectIndex] = calcMoveToTargetHorizont(points[objectIndex], photoAltitude, photoDirection, feed.fovV, feed.fovH,
                                                        resolutionX=feed.imgWidth,
                                                        resolutionY=feed.imgHeight)
+        print "    ", points[objectIndex]
 
     objectNum = feed.veh.commandQueue.visitPoints(points, relativeToStartingPos=True, callbackOnVisited=recognizeObject,
                                                   callbackArg=feed)
 
-    ###################
-    # reset camera
-    feed.veh.setCameraAim(VehicleApi.FRONT)
-
-
 
 def recognizeObject(id, feed):
+    print "recognizing object", id, "..."
     ###################
     # make a photo
     feed.veh.setCameraAim(VehicleApi.DOWN)    
     sleep(WAITING_TIME)
         
-    sourceVectors = getImageVectorized(feed, imageName="ImageForRecogAbove_"+str(id))
-    
-    photoDirection = feed.veh.quad.heading
-    photoAltitude = feed.veh.getPositionVector()[2]    
+    sourceVectors, photoDirection, photoAltitude = getImageVectorized(feed, imageName="ImageForRecogAbove_"+str(id))
     print "taking photo from altitude:", photoAltitude, "at direction: ", photoDirection
         
     global searchedObject
@@ -348,11 +350,7 @@ def scanObject(feed):
     feed.veh.setCameraAim(VehicleApi.DOWN)    
     sleep(WAITING_TIME)
     
-    sourceVectors = getImageVectorized(feed, imageName="ImageForRecogAbove_"+str(id))
-    
-    photoDirection = feed.veh.quad.heading
-    photoAltitude = feed.veh.getPositionVector()[2]
-    #photoPos = feed.veh.getPositionVector()    
+    sourceVectors, photoDirection, photoAltitude = getImageVectorized(feed, imageName="ImageForRecogAbove_"+str(id))
     print "taking photo from altitude:", photoAltitude, "at direction: ", photoDirection
     
     objectIndex = 0
@@ -436,9 +434,7 @@ def scanObject(feed):
 
     flt = ImageApi.Filter()
     processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
-    
-    
-    
+       
     
     # Preparing images for 3D model building
     # TODO - rework, probably not doing what it's supposed to    
@@ -528,9 +524,11 @@ def getImageVectorized(feed, imageName):
     while(imageOK != 'y'):
         rawImage = camera.getFrame()
         filter.showImage(rawImage)
-
+        
         processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
         sourceVectors = processor.getVectorRepresentation(rawImage, filter.imagePreprocess, filter.imageEdgeDetect)
+        # remove short vectors
+        
         if DEBUG_MOVEMENT:
             gp = GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain']) 
             
@@ -539,7 +537,10 @@ def getImageVectorized(feed, imageName):
     if DEBUG_MOVEMENT:
         saveImageForDebugging(rawImage, imageName) 
         GnuplotDrawer.saveToFile(gp, imageName+"Vec", (feed.imgWidth,feed.imgHeight))
-    return sourceVectors
+    
+    photoDirection = feed.veh.quad.heading
+    photoAltitude = feed.veh.getPositionVector()[2]
+    return sourceVectors, photoDirection, photoAltitude
  
         
 def getRawImage(feed, imageName):
@@ -554,11 +555,10 @@ def getRawImage(feed, imageName):
             gp = GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain']) 
             
         imageOK = str(raw_input("Is the image OK? (y/n) >"))
-    
+        
     if DEBUG_MOVEMENT:
         saveImageForDebugging(rawImage, imageName) 
-        GnuplotDrawer.saveToFile(gp, imageName+"Vec", (feed.imgWidth,feed.imgHeight))
-        
+        GnuplotDrawer.saveToFile(gp, imageName+"Vec", (feed.imgWidth,feed.imgHeight))    
     return rawImage
 
 

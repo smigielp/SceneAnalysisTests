@@ -263,7 +263,7 @@ def runRecMovementTest(sitlTest):
         window.cameraFromVehicle(True)
         window.debug_OpenGL = False
     else:
-        DEBUG_MOVEMENT = False
+        DEBUG_MOVE0MENT = False
         
 
     f = ImageApi.Filter()

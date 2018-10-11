@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?eclipse-pydev version="1.0"?><pydev_project>
+<pydev_property name="org.python.pydev.PYTHON_PROJECT_INTERPRETER">Default</pydev_property>
+<pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 2.7</pydev_property>
+
+
+<pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
+<path>/${PROJECT_DIR_NAME}</path>
+<path>/${PROJECT_DIR_NAME}/MainAPP</path>
+<path>/${PROJECT_DIR_NAME}/MainAPP/TestCases</path>
+<path>/${PROJECT_DIR_NAME}/MainAPP/TestApplication</path>
+</pydev_pathproperty>
+<pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
+<path>E:\Programowanie\workspace\SceneAnalysisLib\src\Tools</path>
+<path>E:\Programowanie\workspace\SceneAnalysisLib\src</path>
+<path>E:\Programowanie\workspace\SceneAnalysisLib\src\Recognition</path>
+<path>E:\Programowanie\workspace\SceneAnalysisLib\src\SceneRepTools</path>
+</pydev_pathproperty>
+</pydev_project>
