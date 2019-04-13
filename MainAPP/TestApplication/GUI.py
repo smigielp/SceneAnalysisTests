@@ -3,6 +3,7 @@ from Tkinter import *
 from threading import Thread
 from tkFileDialog import askopenfilename
 from ImageApi import Filter
+from Tools import GnuplotDrawer
 
 
 class GUI(Thread):
@@ -65,7 +66,8 @@ class GUI(Thread):
     def onClosing(self):
         self.control.killApplication()
         self.root.destroy()
-        
+        GnuplotDrawer.gnuPlots = None
+
     
     def showTakenCameraImg(self, img):
         self.image["taken"] = img #self.filter.getImageTk(img, IMAGE_WIDTH)

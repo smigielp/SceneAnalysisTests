@@ -1,6 +1,5 @@
 from threading import Thread
 
-from Tools import MovementTracker
 from TestCases import GraphSearchTest, Model3DSpaceTest, SceneModelTest, Model3DTest, MovementControlTest, UAVTest, PhdTests
 from ImageApi import Filter, CameraApi, CameraApi2
 from ImageProcessor import ImageProcessor
@@ -11,6 +10,7 @@ from Utils import getCentroid, calcMoveToTargetHorizont, calcHeadingChangeForFro
 import ImageApi
 import GnuplotDrawer
 import FuzzyShapeRecognition
+import ShapeRecognition
 import sys
 import math
 
@@ -19,7 +19,7 @@ from dronekit_sitl import SITL
 
 DEBUG_LEVEL = 3
 
-PARAMETER_FILE_NAME = "Parameters/algorithms_parameters.txt"
+PARAMETER_FILE_NAME = "../../Parameters/algorithms_parameters.txt"
 
 
 class BaseControl(Thread):
@@ -40,8 +40,9 @@ class BaseControl(Thread):
                         'Vectorization test', #6
                         'Mavlink test', #7
                         'Movement test', #8
-                        'Final Tests', #9
-                        'Ad hoc test' #10
+                        'PHD Tests - big scene', #9
+                        'PHD Tests - small scene', #10
+                        'Ad hoc test' #11
                     ]
 
     def setTestCase(self, testCase):
@@ -102,12 +103,16 @@ class BaseControl(Thread):
         # Fuzzy Recognition
         elif testCase == 4: 
             processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1', inDebugLevel=DEBUG_LEVEL)
-            imagecv = self.filter.loadCvImage("debug/screens/20180811/ImageSceneAbove.jpg")
+            imagecv = self.filter.loadCvImage("E:\Programowanie\workspace\SceneAnalysisTests\TestPictures\\a_complex.png")
             sourceVectors = processor.getVectorRepresentation(imagecv, self.filter.imagePreprocess, self.filter.imageEdgeDetect)
-            
-            image = self.filter.loadCvImage("TestPictures/b.png")
+
+            #sourceVectors = {'color': [[235, 235, 235]], 'vect': [[[181.5, 250.0], [182, 311], [184, 307], [329, 311], [485, 311], [507, 306], [507, 242], [503, 226], [192, 223], [182, 234], [181.5, 250.0]]], 'domain': [[0, 720L], [0, 480L]]}
+
+            image = self.filter.loadCvImage("E:\Programowanie\workspace\SceneAnalysisTests\TestPictures\\b_complex.png")
             searchedObjectVectors = processor.getVectorRepresentation(image, self.filter.imagePreprocess, self.filter.imageEdgeDetect)
-             
+
+            print searchedObjectVectors['vect'][0]
+
             found = FuzzyShapeRecognition.findSinglePattern(searchedObjectVectors['vect'][0], sourceVectors['vect'])
             print found
             
@@ -166,8 +171,12 @@ class BaseControl(Thread):
         elif testCase == 9:
             PhdTests.runTest()
             return
-        
+
         elif testCase == 10:
+            PhdTests.runTest()
+            return
+        
+        elif testCase == 11:
             f = Filter()
             img = f.loadCvImage("TestPictures/b_complex.png")
             processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1')
@@ -179,15 +188,14 @@ class BaseControl(Thread):
 
     def processOpenedFile(self, filename):
         imagecv = self.filter.loadCvImage(filename)
-        # some processing...  
-        #img = self.filter.imagePreprocess(imagecv)
-        #self.filter.showImage(img)
-                      
         processor = ImageProcessor(PARAMETER_FILE_NAME, 'parameters_test1', inDebugLevel=DEBUG_LEVEL)        
         sourceVectors = processor.getVectorRepresentation(imagecv, self.filter.imagePreprocess, self.filter.imageEdgeDetect)
         GnuplotDrawer.printVectorPicture(sourceVectors['vect'], sourceVectors['domain'])
-        
+        print "VECTORS: "
         print sourceVectors
+
+        #print ShapeRecognition.extractPattern(sourceVectors['vect'][0], 1.0)
+
         #imagetk = self.filter.getImageTkBGR(imagecv, self.gui.IMAGE_WIDTH)
         #self.gui.showOpenedImg(imagetk)
 
